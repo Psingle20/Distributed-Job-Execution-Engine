@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>WorkerService.Application</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\WorkerService.Domain\WorkerService.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\packages\JobEngine.Contracts\src\JobEngine.Contracts\JobEngine.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>

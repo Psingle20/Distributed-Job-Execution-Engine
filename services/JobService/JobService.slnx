@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JobService.Api/JobService.Api.csproj" />
+    <Project Path="src/JobService.Application/JobService.Application.csproj" />
+    <Project Path="src/JobService.Domain/JobService.Domain.csproj" />
+    <Project Path="src/JobService.Infrastructure/JobService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/JobService.Domain.Tests/JobService.Domain.Tests.csproj" />
+  </Folder>
+  <Project Path="../../packages/CleanArchitecture.BuildingBlocks/src/CleanArchitecture.BuildingBlocks/CleanArchitecture.BuildingBlocks.csproj" />
+  <Project Path="../../packages/Dapr.EntityFrameworkCore.Outbox/src/Dapr.EntityFrameworkCore.Outbox/Dapr.EntityFrameworkCore.Outbox.csproj" />
+  <Project Path="../../packages/JobEngine.Contracts/src/JobEngine.Contracts/JobEngine.Contracts.csproj" />
+</Solution>

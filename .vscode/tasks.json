@@ -1,0 +1,118 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "infra-up",
+      "type": "shell",
+      "command": "docker compose -f deploy/compose/docker-compose.yml up -d",
+      "problemMatcher": [],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "infra-down",
+      "type": "shell",
+      "command": "docker compose -f deploy/compose/docker-compose.yml down",
+      "problemMatcher": [],
+      "group": "none"
+    },
+    {
+      "label": "run-jobservice",
+      "type": "shell",
+      "command": "dapr run --app-id jobservice --app-port 5000 --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./deploy/dapr/components --log-level info -- dotnet run --project services/JobService/src/JobService.Api --urls http://localhost:5000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "run-worker-1",
+      "type": "shell",
+      "command": "dapr run --app-id workerservice --app-port 5101 --dapr-http-port 3501 --dapr-grpc-port 50011 --resources-path ./deploy/dapr/components --log-level info -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5101",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "run-worker-2",
+      "type": "shell",
+      "command": "dapr run --app-id workerservice --app-port 5102 --dapr-http-port 3502 --dapr-grpc-port 50012 --resources-path ./deploy/dapr/components --log-level info -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5102",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "run-worker-3",
+      "type": "shell",
+      "command": "dapr run --app-id workerservice --app-port 5103 --dapr-http-port 3503 --dapr-grpc-port 50013 --resources-path ./deploy/dapr/components --log-level info -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5103",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "run-all-services",
+      "dependsOn": [
+        "run-jobservice",
+        "run-worker-1",
+        "run-worker-2",
+        "run-worker-3"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "group": "none"
+    },
+    {
+      "label": "dapr-sidecar-jobservice",
+      "type": "shell",
+      "command": "dapr run --app-id jobservice --app-port 5000 --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./deploy/dapr/components --log-level info",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "sidecars"
+      }
+    },
+    {
+      "label": "dapr-sidecar-worker",
+      "type": "shell",
+      "command": "dapr run --app-id workerservice --app-port 5101 --dapr-http-port 3501 --dapr-grpc-port 50011 --resources-path ./deploy/dapr/components --log-level info",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "sidecars"
+      }
+    }
+  ]
+}

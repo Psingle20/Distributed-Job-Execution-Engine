@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>JobEngine.Contracts</RootNamespace>
+        <PackageId>JobEngine.Contracts</PackageId>
+        <Title>Job Engine Integration Contracts</Title>
+        <Description>Shared integration event records for the Distributed Job Execution Engine. Referenced by both JobService and WorkerService.</Description>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+</Project>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job Engine — Demo Control Panel</title>
+    <style>
+        :root {
+            --bg: #0f172a; --surface: #1e293b; --border: #334155;
+            --text: #e2e8f0; --muted: #94a3b8; --accent: #3b82f6;
+            --green: #22c55e; --red: #ef4444; --yellow: #eab308; --orange: #f97316;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 1rem; }
+        h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+        h2 { font-size: 1rem; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; }
+
+        .stats { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .stat { text-align: center; flex: 1; min-width: 60px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+
+        .stat-pending .stat-value { color: var(--yellow); }
+        .stat-running .stat-value { color: var(--accent); }
+        .stat-retrying .stat-value { color: var(--orange); }
+        .stat-completed .stat-value { color: var(--green); }
+        .stat-failed .stat-value { color: var(--red); }
+        .stat-cancelled .stat-value { color: var(--muted); }
+
+        label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+        select, input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.6rem; border-radius: 0.25rem; width: 100%; font-size: 0.85rem; }
+        .row { display: flex; gap: 0.5rem; align-items: end; margin-bottom: 0.5rem; }
+        .row > * { flex: 1; }
+
+        button { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
+        button:hover { opacity: 0.9; }
+        button.danger { background: var(--red); }
+        button.warn { background: var(--orange); }
+        button.success { background: var(--green); }
+        button.small { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+
+        .chaos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .chaos-btn { text-align: left; padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+
+        .jobs-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .jobs-table th, .jobs-table td { padding: 0.3rem 0.5rem; text-align: left; border-bottom: 1px solid var(--border); }
+        .jobs-table th { color: var(--muted); font-weight: 500; }
+
+        .badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 0.2rem; font-size: 0.7rem; font-weight: 600; }
+        .badge-pending { background: #422006; color: var(--yellow); }
+        .badge-running { background: #172554; color: var(--accent); }
+        .badge-retrying { background: #431407; color: var(--orange); }
+        .badge-completed { background: #052e16; color: var(--green); }
+        .badge-failed { background: #450a0a; color: var(--red); }
+        .badge-cancelled { background: #1e293b; color: var(--muted); }
+
+        .log { background: var(--bg); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.5rem; font-family: monospace; font-size: 0.75rem; height: 120px; overflow-y: auto; color: var(--muted); }
+        .log-entry { margin-bottom: 0.15rem; }
+        .log-time { color: var(--border); }
+
+        .active-policies { list-style: none; }
+        .active-policies li { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        .active-policies .name { color: var(--red); font-weight: 600; }
+
+        #status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
+        .connected { background: var(--green); }
+        .disconnected { background: var(--red); }
+    </style>
+</head>
+<body>
+    <h1><span id="status-indicator" class="disconnected"></span>Distributed Job Engine — Demo Control Panel</h1>
+
+    <h2>Job Summary</h2>
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="stats" id="summary-stats">
+            <div class="stat stat-pending"><div class="stat-value" id="count-pending">-</div><div class="stat-label">Pending</div></div>
+            <div class="stat stat-running"><div class="stat-value" id="count-running">-</div><div class="stat-label">Running</div></div>
+            <div class="stat stat-retrying"><div class="stat-value" id="count-retrying">-</div><div class="stat-label">Retrying</div></div>
+            <div class="stat stat-completed"><div class="stat-value" id="count-completed">-</div><div class="stat-label">Completed</div></div>
+            <div class="stat stat-failed"><div class="stat-value" id="count-failed">-</div><div class="stat-label">Failed</div></div>
+            <div class="stat stat-cancelled"><div class="stat-value" id="count-cancelled">-</div><div class="stat-label">Cancelled</div></div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Submit Job</h2>
+            <div class="row">
+                <div>
+                    <label>Type</label>
+                    <select id="job-type">
+                        <option value="generate-report">generate-report</option>
+                        <option value="data-export">data-export</option>
+                        <option value="always-fail">always-fail</option>
+                        <option value="fail-n-times">fail-n-times</option>
+                        <option value="slow-job">slow-job</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Max Attempts</label>
+                    <input type="number" id="max-attempts" value="3" min="1" max="10" />
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label>Payload JSON</label>
+                    <input type="text" id="payload" value='{}' />
+                </div>
+            </div>
+            <div class="row">
+                <button onclick="submitJob()">Submit Single</button>
+                <div style="display:flex; gap:0.3rem; align-items:end;">
+                    <div><label>Count</label><input type="number" id="bulk-count" value="10" min="1" max="1000" style="width:70px" /></div>
+                    <button onclick="submitBulk()">Submit Bulk</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Chaos — JobService</h2>
+            <div class="chaos-grid">
+                <button class="danger chaos-btn" onclick="chaos('jobservice', 'crash-after-commit')">Crash After Commit</button>
+                <button class="warn chaos-btn" onclick="chaos('jobservice', 'pause-outbox')">Pause Outbox</button>
+                <button class="success chaos-btn" onclick="chaos('jobservice', 'resume-outbox')">Resume Outbox</button>
+                <button class="warn chaos-btn" onclick="chaosWithParam('jobservice', 'delay-outbox', 'delayMs', 5000)">Delay Outbox 5s</button>
+                <button class="danger chaos-btn" onclick="chaos('jobservice', 'force-publish-failure')">Force Publish Fail</button>
+                <button class="small" onclick="clearAllChaos('jobservice')">Clear All</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Chaos — WorkerService</h2>
+            <div class="chaos-grid">
+                <button class="danger chaos-btn" onclick="chaos('workerservice', 'crash-after-claim')">Crash After Claim</button>
+                <button class="danger chaos-btn" onclick="chaos('workerservice', 'crash-after-effect')">Crash After Effect</button>
+                <button class="danger chaos-btn" onclick="chaos('workerservice', 'fail-next-job')">Fail Next Job</button>
+                <button class="warn chaos-btn" onclick="chaosWithParam('workerservice', 'delay-execution', 'delayMs', 10000)">Delay Exec 10s</button>
+                <button class="danger chaos-btn" onclick="chaos('workerservice', 'stop-heartbeat')">Stop Heartbeat</button>
+                <button class="danger chaos-btn" onclick="chaos('workerservice', 'duplicate-event')">Duplicate Event</button>
+                <button class="small" onclick="clearAllChaos('workerservice')">Clear All</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Active Chaos Policies</h2>
+            <ul class="active-policies" id="chaos-list">
+                <li style="color: var(--muted); font-size: 0.8rem;">No active policies</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>Recent Jobs</h2>
+    <div class="card" style="margin-bottom: 1.5rem; overflow-x: auto;">
+        <table class="jobs-table">
+            <thead>
+                <tr><th>ID</th><th>Type</th><th>State</th><th>Attempt</th><th>Created</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="jobs-body">
+                <tr><td colspan="6" style="color: var(--muted);">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Event Log</h2>
+    <div class="log" id="event-log"></div>
+
+    <script>
+        const JOB_API = window.location.origin;
+        const WORKER_API = window.WORKER_URL || 'http://localhost:5101';
+
+        function log(msg) {
+            const el = document.getElementById('event-log');
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML = `<div class="log-entry"><span class="log-time">${time}</span> ${msg}</div>` + el.innerHTML;
+            if (el.children.length > 200) el.removeChild(el.lastChild);
+        }
+
+        async function api(method, url, body) {
+            try {
+                const opts = { method, headers: { 'Content-Type': 'application/json' } };
+                if (body) opts.body = JSON.stringify(body);
+                const res = await fetch(url, opts);
+                const data = res.ok ? await res.json().catch(() => null) : null;
+                return { ok: res.ok, status: res.status, data };
+            } catch (e) {
+                return { ok: false, status: 0, data: null, error: e.message };
+            }
+        }
+
+        async function submitJob() {
+            const type = document.getElementById('job-type').value;
+            const maxAttempts = parseInt(document.getElementById('max-attempts').value);
+            const payload = document.getElementById('payload').value;
+            const result = await api('POST', `${JOB_API}/jobs`, { type, payloadJson: payload, maxAttempts });
+            if (result.ok) {
+                log(`<span style="color:var(--green)">Created job ${result.data}</span> [${type}]`);
+            } else {
+                log(`<span style="color:var(--red)">Failed to create job: ${result.status}</span>`);
+            }
+        }
+
+        async function submitBulk() {
+            const count = parseInt(document.getElementById('bulk-count').value);
+            const type = document.getElementById('job-type').value;
+            const maxAttempts = parseInt(document.getElementById('max-attempts').value);
+            const payload = document.getElementById('payload').value;
+            log(`Submitting ${count} jobs of type [${type}]...`);
+            let ok = 0, fail = 0;
+            const promises = [];
+            for (let i = 0; i < count; i++) {
+                promises.push(api('POST', `${JOB_API}/jobs`, { type, payloadJson: payload, maxAttempts }).then(r => r.ok ? ok++ : fail++));
+            }
+            await Promise.all(promises);
+            log(`Bulk complete: <span style="color:var(--green)">${ok} created</span>, <span style="color:var(--red)">${fail} failed</span>`);
+        }
+
+        async function cancelJob(jobId) {
+            const result = await api('POST', `${JOB_API}/jobs/${jobId}/cancel`);
+            log(result.ok ? `Cancelled job ${jobId.substring(0, 8)}...` : `Failed to cancel: ${result.status}`);
+        }
+
+        async function retryJob(jobId) {
+            const result = await api('POST', `${JOB_API}/jobs/${jobId}/retry`);
+            log(result.ok ? `Retried job ${jobId.substring(0, 8)}...` : `Failed to retry: ${result.status}`);
+        }
+
+        async function chaos(service, policy) {
+            const base = service === 'jobservice' ? JOB_API : WORKER_API;
+            const result = await api('POST', `${base}/demo/failures/${policy}`);
+            log(result.ok
+                ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} on ${service}`
+                : `Failed to activate ${policy}: ${result.status}`);
+        }
+
+        async function chaosWithParam(service, policy, param, value) {
+            const base = service === 'jobservice' ? JOB_API : WORKER_API;
+            const result = await api('POST', `${base}/demo/failures/${policy}?${param}=${value}`);
+            log(result.ok
+                ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} (${param}=${value}) on ${service}`
+                : `Failed to activate ${policy}: ${result.status}`);
+        }
+
+        async function deactivateChaos(service, policy) {
+            const base = service === 'jobservice' ? JOB_API : WORKER_API;
+            await api('DELETE', `${base}/demo/failures/${policy}`);
+            log(`<span style="color:var(--green)">[CHAOS]</span> Deactivated ${policy} on ${service}`);
+        }
+
+        async function clearAllChaos(service) {
+            const base = service === 'jobservice' ? JOB_API : WORKER_API;
+            const result = await api('GET', `${base}/demo/failures`);
+            if (result.ok && result.data) {
+                for (const p of result.data) {
+                    await api('DELETE', `${base}/demo/failures/${p.name}`);
+                }
+                log(`<span style="color:var(--green)">[CHAOS]</span> Cleared all policies on ${service}`);
+            }
+        }
+
+        async function refreshSummary() {
+            const result = await api('GET', `${JOB_API}/jobs/summary`);
+            const indicator = document.getElementById('status-indicator');
+            if (result.ok && result.data) {
+                indicator.className = 'connected';
+                const states = ['Pending', 'Running', 'Retrying', 'Completed', 'Failed', 'Cancelled'];
+                for (const s of states) {
+                    const el = document.getElementById(`count-${s.toLowerCase()}`);
+                    el.textContent = result.data[s] || 0;
+                }
+            } else {
+                indicator.className = 'disconnected';
+            }
+        }
+
+        async function refreshJobs() {
+            const result = await api('GET', `${JOB_API}/jobs?pageSize=20&page=1`);
+            const tbody = document.getElementById('jobs-body');
+            if (result.ok && result.data && result.data.length > 0) {
+                tbody.innerHTML = result.data.map(j => `
+                    <tr>
+                        <td title="${j.id}" style="font-family:monospace;font-size:0.75rem">${j.id.substring(0, 8)}...</td>
+                        <td>${j.type}</td>
+                        <td><span class="badge badge-${j.state.toLowerCase()}">${j.state}</span></td>
+                        <td>${j.attemptCount || 0}/${j.maxAttempts}</td>
+                        <td style="font-size:0.75rem">${new Date(j.createdAt).toLocaleTimeString()}</td>
+                        <td>
+                            ${['Pending', 'Running'].includes(j.state) ? `<button class="small danger" onclick="cancelJob('${j.id}')">Cancel</button>` : ''}
+                            ${j.state === 'Failed' ? `<button class="small warn" onclick="retryJob('${j.id}')">Retry</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } else if (result.ok) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--muted);">No jobs yet</td></tr>';
+            }
+        }
+
+        async function refreshChaos() {
+            const list = document.getElementById('chaos-list');
+            const policies = [];
+
+            const js = await api('GET', `${JOB_API}/demo/failures`);
+            if (js.ok && js.data) {
+                for (const p of js.data) policies.push({ ...p, service: 'jobservice' });
+            }
+
+            const ws = await api('GET', `${WORKER_API}/demo/failures`);
+            if (ws.ok && ws.data) {
+                for (const p of ws.data) policies.push({ ...p, service: 'workerservice' });
+            }
+
+            if (policies.length === 0) {
+                list.innerHTML = '<li style="color: var(--muted); font-size: 0.8rem;">No active policies</li>';
+            } else {
+                list.innerHTML = policies.map(p => `
+                    <li>
+                        <span><span class="name">${p.name}</span> <span style="color:var(--muted);font-size:0.7rem">(${p.service})</span></span>
+                        <button class="small" onclick="deactivateChaos('${p.service}', '${p.name}')">Deactivate</button>
+                    </li>
+                `).join('');
+            }
+        }
+
+        async function refresh() {
+            await Promise.all([refreshSummary(), refreshJobs(), refreshChaos()]);
+        }
+
+        refresh();
+        setInterval(refresh, 2000);
+    </script>
+</body>
+</html>

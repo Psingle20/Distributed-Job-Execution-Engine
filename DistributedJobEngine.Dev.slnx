@@ -1,0 +1,43 @@
+<Solution>
+  <Folder Name="/packages/" />
+  <Folder Name="/packages/CleanArchitecture.BuildingBlocks/" />
+  <Folder Name="/packages/CleanArchitecture.BuildingBlocks/src/">
+    <Project Path="packages/CleanArchitecture.BuildingBlocks/src/CleanArchitecture.BuildingBlocks/CleanArchitecture.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/packages/CleanArchitecture.BuildingBlocks/tests/">
+    <Project Path="packages/CleanArchitecture.BuildingBlocks/tests/CleanArchitecture.BuildingBlocks.Tests/CleanArchitecture.BuildingBlocks.Tests.csproj" />
+  </Folder>
+  <Folder Name="/packages/Dapr.EntityFrameworkCore.Outbox/" />
+  <Folder Name="/packages/Dapr.EntityFrameworkCore.Outbox/src/">
+    <Project Path="packages/Dapr.EntityFrameworkCore.Outbox/src/Dapr.EntityFrameworkCore.Outbox/Dapr.EntityFrameworkCore.Outbox.csproj" />
+  </Folder>
+  <Folder Name="/packages/Dapr.EntityFrameworkCore.Outbox/tests/">
+    <Project Path="packages/Dapr.EntityFrameworkCore.Outbox/tests/Dapr.EntityFrameworkCore.Outbox.Tests/Dapr.EntityFrameworkCore.Outbox.Tests.csproj" />
+  </Folder>
+  <Folder Name="/packages/JobEngine.Contracts/" />
+  <Folder Name="/packages/JobEngine.Contracts/src/">
+    <Project Path="packages/JobEngine.Contracts/src/JobEngine.Contracts/JobEngine.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/JobService/" />
+  <Folder Name="/services/JobService/src/">
+    <Project Path="services/JobService/src/JobService.Api/JobService.Api.csproj" />
+    <Project Path="services/JobService/src/JobService.Application/JobService.Application.csproj" />
+    <Project Path="services/JobService/src/JobService.Domain/JobService.Domain.csproj" />
+    <Project Path="services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/services/JobService/tests/">
+    <Project Path="services/JobService/tests/JobService.ArchitectureTests/JobService.ArchitectureTests.csproj" />
+    <Project Path="services/JobService/tests/JobService.Domain.Tests/JobService.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/WorkerService/" />
+  <Folder Name="/services/WorkerService/src/">
+    <Project Path="services/WorkerService/src/WorkerService.Api/WorkerService.Api.csproj" />
+    <Project Path="services/WorkerService/src/WorkerService.Application/WorkerService.Application.csproj" />
+    <Project Path="services/WorkerService/src/WorkerService.Domain/WorkerService.Domain.csproj" />
+    <Project Path="services/WorkerService/src/WorkerService.Infrastructure/WorkerService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/services/WorkerService/tests/">
+    <Project Path="services/WorkerService/tests/WorkerService.ArchitectureTests/WorkerService.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>

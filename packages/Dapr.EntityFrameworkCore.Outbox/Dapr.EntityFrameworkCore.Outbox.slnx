@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dapr.EntityFrameworkCore.Outbox/Dapr.EntityFrameworkCore.Outbox.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dapr.EntityFrameworkCore.Outbox.Tests/Dapr.EntityFrameworkCore.Outbox.Tests.csproj" />
+  </Folder>
+</Solution>

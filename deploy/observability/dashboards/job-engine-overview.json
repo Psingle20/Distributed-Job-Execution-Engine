@@ -1,0 +1,157 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "job-engine-overview",
+    "title": "Distributed Job Engine - Overview",
+    "tags": ["job-engine"],
+    "timezone": "browser",
+    "refresh": "5s",
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Jobs Created (rate/min)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(jobs_created_total[1m]) * 60",
+            "legendFormat": "created/min"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Jobs Completed (rate/min)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(jobs_completed_total[1m]) * 60",
+            "legendFormat": "completed/min"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Jobs Failed (rate/min)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(jobs_failed_total[1m]) * 60",
+            "legendFormat": "failed/min"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Jobs Cancelled (rate/min)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(jobs_cancelled_total[1m]) * 60",
+            "legendFormat": "cancelled/min"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Worker Claim Conflicts",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(worker_claim_conflicts_total)",
+            "legendFormat": "conflicts"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Leases Recovered",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(jobs_leases_recovered_total)",
+            "legendFormat": "recovered"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Job Throughput Over Time",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "rate(jobs_created_total[1m]) * 60",
+            "legendFormat": "Created"
+          },
+          {
+            "expr": "rate(jobs_completed_total[1m]) * 60",
+            "legendFormat": "Completed"
+          },
+          {
+            "expr": "rate(jobs_failed_total[1m]) * 60",
+            "legendFormat": "Failed"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Worker Activity",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [
+          {
+            "expr": "rate(worker_jobs_claimed_total[1m]) * 60",
+            "legendFormat": "{{instance}} - Claimed"
+          },
+          {
+            "expr": "rate(worker_jobs_executed_total[1m]) * 60",
+            "legendFormat": "{{instance}} - Executed"
+          },
+          {
+            "expr": "rate(worker_jobs_failed_total[1m]) * 60",
+            "legendFormat": "{{instance}} - Failed"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Heartbeats & Duplicates",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          {
+            "expr": "rate(worker_heartbeats_sent_total[1m]) * 60",
+            "legendFormat": "{{instance}} - Heartbeats/min"
+          },
+          {
+            "expr": "rate(worker_duplicates_skipped_total[1m]) * 60",
+            "legendFormat": "{{instance}} - Duplicates Skipped/min"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "HTTP Request Duration (p99)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[1m])) by (le, service_name))",
+            "legendFormat": "{{service_name}} p99"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": true
+}

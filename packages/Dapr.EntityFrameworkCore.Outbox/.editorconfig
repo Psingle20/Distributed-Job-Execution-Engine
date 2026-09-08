@@ -1,0 +1,25 @@
+# Override for extracted Dapr outbox package — follows Dapr SDK coding conventions
+[*.cs]
+
+# Allow var usage (Dapr SDK convention)
+csharp_style_var_elsewhere = true:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# CA2100: SQL is built from config, not user input
+dotnet_diagnostic.CA2100.severity = none
+
+# CA1869: JsonSerializerOptions caching — intentional fallback path
+dotnet_diagnostic.CA1869.severity = none
+
+# S2743: Static fields in generic types — intentional per-TDbContext logger caching
+dotnet_diagnostic.S2743.severity = none
+
+# S4581: Guid default check — intentional sentinel comparison
+dotnet_diagnostic.S4581.severity = none
+
+# S927: Parameter name mismatch — extracted code, names are descriptive
+dotnet_diagnostic.S927.severity = none
+
+# S2857: SQL string formatting — raw SQL is intentional in claim strategies
+dotnet_diagnostic.S2857.severity = none

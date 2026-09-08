@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>JobService.Application</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="JobService.Application.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\JobService.Domain\JobService.Domain.csproj" />
+        <ProjectReference Include="..\..\..\..\packages\JobEngine.Contracts\src\JobEngine.Contracts\JobEngine.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>
