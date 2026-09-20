@@ -9,6 +9,7 @@ public sealed class WorkerExecution : Entity
     public string JobType { get; private set; } = string.Empty;
     public string WorkerId { get; private set; } = string.Empty;
     public int AttemptNumber { get; private set; }
+    public Guid ExecutionId { get; private set; }
     public ExecutionStatus Status { get; private set; }
     public string? ResultPayload { get; private set; }
     public string? ErrorMessage { get; private set; }
@@ -22,6 +23,7 @@ public sealed class WorkerExecution : Entity
         string jobType,
         string workerId,
         int attemptNumber,
+        Guid executionId,
         DateTimeOffset now)
     {
         return new WorkerExecution
@@ -31,6 +33,7 @@ public sealed class WorkerExecution : Entity
             JobType = jobType,
             WorkerId = workerId,
             AttemptNumber = attemptNumber,
+            ExecutionId = executionId,
             Status = ExecutionStatus.Running,
             StartedAt = now
         };

@@ -68,7 +68,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Fail("worker-1", Now.AddSeconds(5), "transient error");
+        job.Fail("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5), "transient error");
 
         var result = job.Claim("worker-2", Now.AddSeconds(10), LeaseDuration);
 
@@ -83,7 +83,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Complete("worker-1", Now.AddSeconds(5));
+        job.Complete("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5));
 
         var result = job.Claim("worker-2", Now.AddSeconds(10), LeaseDuration);
 
@@ -96,7 +96,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob(maxAttempts: 1);
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Fail("worker-1", Now.AddSeconds(5), "error");
+        job.Fail("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5), "error");
 
         var result = job.Claim("worker-2", Now.AddSeconds(100), LeaseDuration);
 
@@ -109,7 +109,7 @@ public sealed class JobTests
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
 
-        var result = job.Heartbeat("worker-1", Now.AddSeconds(10), LeaseDuration);
+        var result = job.Heartbeat("worker-1", job.ExecutionId!.Value, Now.AddSeconds(10), LeaseDuration);
 
         result.IsSuccess.ShouldBeTrue();
         job.LeaseUntil.ShouldBe(Now.AddSeconds(10) + LeaseDuration);
@@ -122,7 +122,7 @@ public sealed class JobTests
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
 
-        var result = job.Heartbeat("worker-2", Now.AddSeconds(10), LeaseDuration);
+        var result = job.Heartbeat("worker-2", job.ExecutionId!.Value, Now.AddSeconds(10), LeaseDuration);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe(JobErrors.NotLeaseOwner);
@@ -133,9 +133,10 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
+        var executionId = job.ExecutionId!.Value;
         job.ClearDomainEvents();
 
-        var result = job.Complete("worker-1", Now.AddSeconds(5));
+        var result = job.Complete("worker-1", executionId, Now.AddSeconds(5));
 
         result.IsSuccess.ShouldBeTrue();
         job.State.ShouldBe(JobState.Completed);
@@ -151,7 +152,7 @@ public sealed class JobTests
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
 
-        var result = job.Complete("worker-2", Now.AddSeconds(5));
+        var result = job.Complete("worker-2", job.ExecutionId!.Value, Now.AddSeconds(5));
 
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe(JobErrors.NotLeaseOwner);
@@ -162,9 +163,10 @@ public sealed class JobTests
     {
         var job = CreateTestJob(maxAttempts: 3);
         job.Claim("worker-1", Now, LeaseDuration);
+        var executionId = job.ExecutionId!.Value;
         job.ClearDomainEvents();
 
-        var result = job.Fail("worker-1", Now.AddSeconds(5), "transient error");
+        var result = job.Fail("worker-1", executionId, Now.AddSeconds(5), "transient error");
 
         result.IsSuccess.ShouldBeTrue();
         job.State.ShouldBe(JobState.Retrying);
@@ -180,9 +182,10 @@ public sealed class JobTests
     {
         var job = CreateTestJob(maxAttempts: 1);
         job.Claim("worker-1", Now, LeaseDuration);
+        var executionId = job.ExecutionId!.Value;
         job.ClearDomainEvents();
 
-        var result = job.Fail("worker-1", Now.AddSeconds(5), "permanent error");
+        var result = job.Fail("worker-1", executionId, Now.AddSeconds(5), "permanent error");
 
         result.IsSuccess.ShouldBeTrue();
         job.State.ShouldBe(JobState.Failed);
@@ -220,7 +223,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Complete("worker-1", Now.AddSeconds(5));
+        job.Complete("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5));
 
         var result = job.Cancel(Now.AddSeconds(10));
 
@@ -266,7 +269,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob(maxAttempts: 1);
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Fail("worker-1", Now.AddSeconds(5), "error");
+        job.Fail("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5), "error");
         job.ClearDomainEvents();
 
         var result = job.RetryFromFailed(Now.AddSeconds(60));
@@ -301,7 +304,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Fail("worker-1", Now.AddSeconds(5), "error");
+        job.Fail("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5), "error");
 
         job.CanBeClaimed(Now.AddMinutes(5)).ShouldBeTrue();
     }
@@ -311,7 +314,7 @@ public sealed class JobTests
     {
         var job = CreateTestJob();
         job.Claim("worker-1", Now, LeaseDuration);
-        job.Complete("worker-1", Now.AddSeconds(5));
+        job.Complete("worker-1", job.ExecutionId!.Value, Now.AddSeconds(5));
 
         job.CanBeClaimed(Now.AddMinutes(5)).ShouldBeFalse();
     }

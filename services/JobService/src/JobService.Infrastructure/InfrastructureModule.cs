@@ -46,5 +46,6 @@ public sealed class InfrastructureModule : IDependencyModule
         services.AddScoped<IOutboxEventPublisher, OutboxEventPublisher>();
 
         services.AddHostedService<LeaseRecoveryBackgroundService>();
+        services.AddHostedService<DueJobDispatcherService>();
     }
 }

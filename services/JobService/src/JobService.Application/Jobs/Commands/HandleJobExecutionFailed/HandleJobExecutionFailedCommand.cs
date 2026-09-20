@@ -6,6 +6,7 @@ public sealed record HandleJobExecutionFailedCommand(
     string MessageId,
     Guid JobId,
     string WorkerId,
+    Guid ExecutionId,
     int AttemptNumber,
     string ErrorMessage,
     bool IsRetryable,

@@ -1,3 +1,4 @@
+using CleanArchitecture.BuildingBlocks;
 using CleanArchitecture.BuildingBlocks.Messaging;
 using JobService.Application.Jobs.Dtos;
 using JobService.Application.Jobs.Queries;
@@ -12,11 +13,11 @@ public sealed class JobController(IRequestHandler handler) : ApiController
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateJobDto dto,
-        CancellationToken cancellationToken) =>
-        MatchCreated(
-            await handler.Handle<CreateJobDto, Guid>(dto, cancellationToken),
-            nameof(GetById),
-            null);
+        CancellationToken cancellationToken)
+    {
+        Result<Guid> result = await handler.Handle<CreateJobDto, Guid>(dto, cancellationToken);
+        return MatchCreated(result, nameof(GetById), result.IsSuccess ? new { jobId = result.Value } : null);
+    }
 
     [HttpGet("{jobId:guid}")]
     public async Task<IActionResult> GetById(

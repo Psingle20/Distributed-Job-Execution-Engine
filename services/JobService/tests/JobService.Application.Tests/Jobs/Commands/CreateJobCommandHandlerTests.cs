@@ -11,6 +11,7 @@ namespace JobService.Application.Tests.Jobs.Commands;
 public sealed class CreateJobCommandHandlerTests
 {
     private readonly Mock<IJobRepository> _jobRepository = new();
+    private readonly Mock<IOutboxEventPublisher> _outbox = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly MockDateTimeProvider _dateTimeProvider = new(JobTestFactory.Now);
     private readonly CreateJobCommandHandler _handler;
@@ -19,6 +20,7 @@ public sealed class CreateJobCommandHandlerTests
     {
         _handler = new CreateJobCommandHandler(
             _jobRepository.Object,
+            _outbox.Object,
             _unitOfWork.Object,
             _dateTimeProvider);
     }

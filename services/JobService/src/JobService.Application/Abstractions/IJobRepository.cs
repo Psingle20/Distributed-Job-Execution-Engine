@@ -14,6 +14,8 @@ public interface IJobRepository
 
     Task<IReadOnlyList<Job>> GetExpiredLeasesAsync(DateTimeOffset now, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Job>> GetDueRetryJobsAsync(DateTimeOffset now, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<Job>> SearchAsync(
         JobState? state,
         string? type,

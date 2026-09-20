@@ -64,14 +64,6 @@ public sealed class ChaosController(IChaosState chaosState) : ControllerBase
         return Ok(new { Status = "activated", Policy = "stop-heartbeat" });
     }
 
-    [HttpPost("duplicate-event")]
-    public IActionResult DuplicateEvent()
-    {
-        chaosState.Activate(new ChaosPolicy(
-            "duplicate-event", ChaosType.DuplicateEvent, new Dictionary<string, string>()));
-        return Ok(new { Status = "activated", Policy = "duplicate-event" });
-    }
-
     [HttpDelete("{policyName}")]
     public IActionResult Deactivate(string policyName)
     {

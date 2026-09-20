@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WorkerService.Application.Abstractions;
+using WorkerService.Application.Observability;
 using WorkerService.Infrastructure.Chaos;
 
 namespace WorkerService.Infrastructure.BackgroundServices;
@@ -64,9 +65,13 @@ internal sealed class WorkerHeartbeatHostedService(
         foreach (Domain.Workers.WorkerExecution execution in activeExecutions)
         {
             CleanArchitecture.BuildingBlocks.Result result =
-                await jobServiceClient.HeartbeatAsync(execution.JobId, WorkerId, cancellationToken);
+                await jobServiceClient.HeartbeatAsync(execution.JobId, WorkerId, execution.ExecutionId, cancellationToken);
 
-            if (result.IsFailure)
+            if (result.IsSuccess)
+            {
+                WorkerServiceDiagnostics.HeartbeatsSent.Add(1);
+            }
+            else
             {
                 logger.LogWarning("Heartbeat failed for job {JobId}: {Error}",
                     execution.JobId, result.Error.Description);

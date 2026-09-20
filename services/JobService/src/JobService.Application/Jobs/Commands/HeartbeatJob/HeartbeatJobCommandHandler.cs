@@ -20,7 +20,7 @@ internal sealed class HeartbeatJobCommandHandler(
             return Result.Failure(JobErrors.NotFound(command.JobId));
         }
 
-        Result result = job.Heartbeat(command.WorkerId, dateTimeProvider.UtcNow, LeaseDuration);
+        Result result = job.Heartbeat(command.WorkerId, command.ExecutionId, dateTimeProvider.UtcNow, LeaseDuration);
         if (result.IsFailure)
         {
             return result;

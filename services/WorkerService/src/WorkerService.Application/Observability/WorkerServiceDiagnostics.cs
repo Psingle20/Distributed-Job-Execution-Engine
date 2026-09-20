@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace WorkerService.Api.Observability;
+namespace WorkerService.Application.Observability;
 
-internal static class WorkerServiceDiagnostics
+public static class WorkerServiceDiagnostics
 {
     public const string ServiceName = "WorkerService";
 

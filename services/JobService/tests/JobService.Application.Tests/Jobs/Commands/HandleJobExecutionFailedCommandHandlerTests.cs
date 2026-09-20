@@ -34,7 +34,7 @@ public sealed class HandleJobExecutionFailedCommandHandlerTests
             .ReturnsAsync(job);
 
         var command = new HandleJobExecutionFailedCommand(
-            "msg-1", job.Id, "worker-1", 1, "transient error", true, failedAt);
+            "msg-1", job.Id, "worker-1", job.ExecutionId!.Value, 1, "transient error", true, failedAt);
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -53,7 +53,7 @@ public sealed class HandleJobExecutionFailedCommandHandlerTests
             .ReturnsAsync(job);
 
         var command = new HandleJobExecutionFailedCommand(
-            "msg-2", job.Id, "worker-1", 1, "permanent error", false, failedAt);
+            "msg-2", job.Id, "worker-1", job.ExecutionId!.Value, 1, "permanent error", false, failedAt);
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -68,7 +68,7 @@ public sealed class HandleJobExecutionFailedCommandHandlerTests
             .ReturnsAsync(true);
 
         var command = new HandleJobExecutionFailedCommand(
-            "msg-dup", Guid.NewGuid(), "worker-1", 1, "error", true, DateTimeOffset.UtcNow);
+            "msg-dup", Guid.NewGuid(), "worker-1", Guid.NewGuid(), 1, "error", true, DateTimeOffset.UtcNow);
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
@@ -85,7 +85,7 @@ public sealed class HandleJobExecutionFailedCommandHandlerTests
             .ReturnsAsync((Job?)null);
 
         var command = new HandleJobExecutionFailedCommand(
-            "msg-3", jobId, "worker-1", 1, "error", true, DateTimeOffset.UtcNow);
+            "msg-3", jobId, "worker-1", Guid.NewGuid(), 1, "error", true, DateTimeOffset.UtcNow);
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
@@ -101,7 +101,7 @@ public sealed class HandleJobExecutionFailedCommandHandlerTests
             .ReturnsAsync(job);
 
         var command = new HandleJobExecutionFailedCommand(
-            "msg-4", job.Id, "worker-1", 1, "error", true, JobTestFactory.Now.AddSeconds(5));
+            "msg-4", job.Id, "worker-1", job.ExecutionId!.Value, 1, "error", true, JobTestFactory.Now.AddSeconds(5));
         await _handler.Handle(command, CancellationToken.None);
 
         _processedMessages.Verify(p => p.AddAsync("msg-4", It.IsAny<CancellationToken>()), Times.Once);

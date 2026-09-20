@@ -11,4 +11,5 @@ public sealed record JobExecutionContext(
     string JobType,
     string PayloadJson,
     int AttemptNumber,
-    string WorkerId);
+    string WorkerId,
+    Guid ExecutionId);

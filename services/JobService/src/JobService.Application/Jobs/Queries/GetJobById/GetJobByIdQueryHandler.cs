@@ -33,5 +33,6 @@ internal sealed class GetJobByIdQueryHandler(IJobRepository jobRepository)
             job.StartedAt,
             job.CompletedAt,
             job.FailedAt,
-            job.LastError);
+            job.LastError,
+            job.Executions.FirstOrDefault(e => e.Status == ExecutionStatus.Completed)?.ResultPayload);
 }

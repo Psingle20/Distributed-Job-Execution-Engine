@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace JobService.Infrastructure.Persistence.Migrations
+namespace JobService.Infrastructure.Migrations
 {
     [DbContext(typeof(JobDbContext))]
-    [Migration("20260905112852_InitialCreate")]
+    [Migration("20260909162316_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -96,8 +96,7 @@ namespace JobService.Infrastructure.Persistence.Migrations
                         .HasName("pk_dapr_outbox_messages");
 
                     b.HasIndex("ProcessedAt", "OccurredAt")
-                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed")
-                        .HasFilter("[ProcessedAt] IS NULL");
+                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed");
 
                     b.ToTable("DaprOutboxMessages", (string)null);
                 });
@@ -119,6 +118,10 @@ namespace JobService.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("ExecutionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("execution_id");
 
                     b.Property<DateTimeOffset?>("FailedAt")
                         .HasColumnType("timestamp with time zone")

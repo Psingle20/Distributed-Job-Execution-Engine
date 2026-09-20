@@ -16,15 +16,16 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
     [Topic("pubsub", "job-executions.completed")]
     public async Task<IActionResult> HandleExecutionCompleted(
         [FromBody] JobExecutionCompletedIntegrationEvent @event,
-        [FromHeader(Name = "Traceparent")] string? traceparent,
+        [FromHeader(Name = "ce-id")] string? cloudEventId,
         CancellationToken cancellationToken)
     {
-        string messageId = traceparent ?? Guid.NewGuid().ToString();
+        string messageId = cloudEventId ?? Guid.NewGuid().ToString();
 
         HandleJobExecutionCompletedCommand command = new(
             messageId,
             @event.JobId,
             @event.WorkerId,
+            @event.ExecutionId,
             @event.AttemptNumber,
             @event.ResultPayload,
             @event.CompletedAt);
@@ -38,15 +39,16 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
     [Topic("pubsub", "job-executions.failed")]
     public async Task<IActionResult> HandleExecutionFailed(
         [FromBody] JobExecutionFailedIntegrationEvent @event,
-        [FromHeader(Name = "Traceparent")] string? traceparent,
+        [FromHeader(Name = "ce-id")] string? cloudEventId,
         CancellationToken cancellationToken)
     {
-        string messageId = traceparent ?? Guid.NewGuid().ToString();
+        string messageId = cloudEventId ?? Guid.NewGuid().ToString();
 
         HandleJobExecutionFailedCommand command = new(
             messageId,
             @event.JobId,
             @event.WorkerId,
+            @event.ExecutionId,
             @event.AttemptNumber,
             @event.ErrorMessage,
             @event.IsRetryable,

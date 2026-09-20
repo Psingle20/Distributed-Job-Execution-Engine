@@ -37,6 +37,15 @@ internal sealed class JobRepository(JobDbContext dbContext) : IJobRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Job>> GetDueRetryJobsAsync(DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        return await dbContext.Jobs
+            .Where(j => j.State == JobState.Retrying && j.NextRunAt != null && j.NextRunAt <= now)
+            .OrderBy(j => j.NextRunAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Job>> SearchAsync(
         JobState? state,
         string? type,

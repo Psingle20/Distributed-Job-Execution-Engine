@@ -5,7 +5,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using WorkerService.Api.Infrastructure;
 using WorkerService.Api.Middleware;
-using WorkerService.Api.Observability;
+using WorkerService.Application.Observability;
 using WorkerService.Application;
 using WorkerService.Domain;
 using WorkerService.Infrastructure;
@@ -35,12 +35,21 @@ try
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddSource(WorkerServiceDiagnostics.ServiceName)
+            .AddSource("Dapr.EntityFrameworkCore.Outbox")
             .AddOtlpExporter())
         .WithMetrics(metrics => metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddMeter(WorkerServiceDiagnostics.ServiceName)
             .AddOtlpExporter());
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy => policy
+            .WithOrigins("http://localhost:5000")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+    });
 
     builder.Services.AddDaprClient();
 
@@ -59,6 +68,7 @@ try
     app.UseMiddleware<RequestContextLoggingMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseExceptionHandler();
+    app.UseCors();
     app.UseCloudEvents();
 
     app.MapSubscribeHandler();

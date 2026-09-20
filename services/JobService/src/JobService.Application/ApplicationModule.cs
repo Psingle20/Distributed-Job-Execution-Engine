@@ -14,31 +14,31 @@ public sealed class ApplicationModule : IDependencyModule
 
         services.Scan(scan => scan
             .FromAssemblyOf<ApplicationModule>()
-            .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+            .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
         services.Scan(scan => scan
             .FromAssemblyOf<ApplicationModule>()
-            .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<>)))
+            .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
         services.Scan(scan => scan
             .FromAssemblyOf<ApplicationModule>()
-            .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
+            .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
         services.Scan(scan => scan
             .FromAssemblyOf<ApplicationModule>()
-            .AddClasses(classes => classes.AssignableTo(typeof(IProcessor<>)))
+            .AddClasses(classes => classes.AssignableTo(typeof(IProcessor<>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
         services.Scan(scan => scan
             .FromAssemblyOf<ApplicationModule>()
-            .AddClasses(classes => classes.AssignableTo(typeof(IProcessor<,>)))
+            .AddClasses(classes => classes.AssignableTo(typeof(IProcessor<,>)), publicOnly: false)
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 

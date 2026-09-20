@@ -1,7 +1,7 @@
 using System.Globalization;
 using JobService.Api.Infrastructure;
 using JobService.Api.Middleware;
-using JobService.Api.Observability;
+using JobService.Application.Observability;
 using JobService.Application;
 using JobService.Domain;
 using JobService.Infrastructure;
@@ -35,12 +35,15 @@ try
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddSource(JobServiceDiagnostics.ServiceName)
+            .AddSource("Dapr.EntityFrameworkCore.Outbox")
             .AddOtlpExporter())
         .WithMetrics(metrics => metrics
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddMeter(JobServiceDiagnostics.ServiceName)
             .AddOtlpExporter());
+
+    builder.Services.AddDaprClient();
 
     new DomainModule().RegisterServices(builder.Services, builder.Configuration);
     new ApplicationModule().RegisterServices(builder.Services, builder.Configuration);

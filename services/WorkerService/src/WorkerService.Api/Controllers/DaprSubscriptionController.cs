@@ -17,10 +17,10 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
     [Topic("pubsub", "jobs.created")]
     public async Task<IActionResult> HandleJobCreated(
         [FromBody] JobCreatedIntegrationEvent @event,
-        [FromHeader(Name = "Traceparent")] string? traceparent,
+        [FromHeader(Name = "ce-id")] string? cloudEventId,
         CancellationToken cancellationToken)
     {
-        string messageId = traceparent ?? Guid.NewGuid().ToString();
+        string messageId = cloudEventId ?? Guid.NewGuid().ToString();
 
         HandleJobCreatedCommand command = new(
             messageId,
@@ -39,10 +39,10 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
     [Topic("pubsub", "jobs.retry-scheduled")]
     public async Task<IActionResult> HandleJobRetryScheduled(
         [FromBody] JobRetryScheduledIntegrationEvent @event,
-        [FromHeader(Name = "Traceparent")] string? traceparent,
+        [FromHeader(Name = "ce-id")] string? cloudEventId,
         CancellationToken cancellationToken)
     {
-        string messageId = traceparent ?? Guid.NewGuid().ToString();
+        string messageId = cloudEventId ?? Guid.NewGuid().ToString();
 
         HandleJobRetryScheduledCommand command = new(
             messageId,
@@ -61,10 +61,10 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
     [Topic("pubsub", "jobs.cancelled")]
     public async Task<IActionResult> HandleJobCancelled(
         [FromBody] JobCancelledIntegrationEvent @event,
-        [FromHeader(Name = "Traceparent")] string? traceparent,
+        [FromHeader(Name = "ce-id")] string? cloudEventId,
         CancellationToken cancellationToken)
     {
-        string messageId = traceparent ?? Guid.NewGuid().ToString();
+        string messageId = cloudEventId ?? Guid.NewGuid().ToString();
 
         HandleJobCancelledCommand command = new(messageId, @event.JobId, @event.CancelledAt);
 

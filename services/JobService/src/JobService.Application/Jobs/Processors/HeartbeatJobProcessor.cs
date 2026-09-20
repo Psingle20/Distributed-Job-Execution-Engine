@@ -10,7 +10,7 @@ internal sealed class HeartbeatJobProcessor(ICommandDispatcher commandDispatcher
 {
     public Task<Result> Process(HeartbeatJobDto dto, CancellationToken cancellationToken)
     {
-        var command = new HeartbeatJobCommand(dto.JobId, dto.WorkerId);
+        var command = new HeartbeatJobCommand(dto.JobId, dto.WorkerId, dto.ExecutionId);
         return commandDispatcher.Dispatch(command, cancellationToken);
     }
 }

@@ -27,4 +27,7 @@ public static class JobErrors
 
     public static readonly Error NotFailed =
         Error.Problem("Job.NotFailed", "Only failed jobs can be retried.");
+
+    public static readonly Error StaleExecution =
+        Error.Conflict("Job.StaleExecution", "The execution ID does not match the current execution.");
 }

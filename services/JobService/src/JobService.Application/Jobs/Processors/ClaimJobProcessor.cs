@@ -6,11 +6,11 @@ using JobService.Application.Jobs.Dtos;
 namespace JobService.Application.Jobs.Processors;
 
 internal sealed class ClaimJobProcessor(ICommandDispatcher commandDispatcher)
-    : IProcessor<ClaimJobDto>
+    : IProcessor<ClaimJobDto, ClaimJobResult>
 {
-    public Task<Result> Process(ClaimJobDto dto, CancellationToken cancellationToken)
+    public Task<Result<ClaimJobResult>> Process(ClaimJobDto dto, CancellationToken cancellationToken)
     {
         var command = new ClaimJobCommand(dto.JobId, dto.WorkerId);
-        return commandDispatcher.Dispatch(command, cancellationToken);
+        return commandDispatcher.Dispatch<ClaimJobResult>(command, cancellationToken);
     }
 }

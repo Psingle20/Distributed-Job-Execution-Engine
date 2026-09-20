@@ -15,4 +15,5 @@ public sealed record JobResponse(
     DateTimeOffset? StartedAt,
     DateTimeOffset? CompletedAt,
     DateTimeOffset? FailedAt,
-    string? LastError);
+    string? LastError,
+    string? ResultPayload);

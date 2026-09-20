@@ -11,6 +11,7 @@ namespace JobService.Application.Tests.Jobs.Commands;
 public sealed class CancelJobCommandHandlerTests
 {
     private readonly Mock<IJobRepository> _jobRepository = new();
+    private readonly Mock<IOutboxEventPublisher> _outbox = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly MockDateTimeProvider _dateTimeProvider = new(JobTestFactory.Now);
     private readonly CancelJobCommandHandler _handler;
@@ -19,6 +20,7 @@ public sealed class CancelJobCommandHandlerTests
     {
         _handler = new CancelJobCommandHandler(
             _jobRepository.Object,
+            _outbox.Object,
             _unitOfWork.Object,
             _dateTimeProvider);
     }

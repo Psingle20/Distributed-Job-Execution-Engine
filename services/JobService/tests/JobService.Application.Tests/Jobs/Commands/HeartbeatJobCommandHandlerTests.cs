@@ -31,7 +31,7 @@ public sealed class HeartbeatJobCommandHandlerTests
             .ReturnsAsync(job);
 
         var result = await _handler.Handle(
-            new HeartbeatJobCommand(job.Id, "worker-1"), CancellationToken.None);
+            new HeartbeatJobCommand(job.Id, "worker-1", job.ExecutionId!.Value), CancellationToken.None);
 
         result.IsSuccess.ShouldBeTrue();
         job.LeaseUntil.ShouldBe(_dateTimeProvider.UtcNow + TimeSpan.FromSeconds(30));
@@ -46,7 +46,7 @@ public sealed class HeartbeatJobCommandHandlerTests
             .ReturnsAsync(job);
 
         var result = await _handler.Handle(
-            new HeartbeatJobCommand(job.Id, "worker-2"), CancellationToken.None);
+            new HeartbeatJobCommand(job.Id, "worker-2", job.ExecutionId!.Value), CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe(JobErrors.NotLeaseOwner);
@@ -60,7 +60,7 @@ public sealed class HeartbeatJobCommandHandlerTests
             .ReturnsAsync((Job?)null);
 
         var result = await _handler.Handle(
-            new HeartbeatJobCommand(jobId, "worker-1"), CancellationToken.None);
+            new HeartbeatJobCommand(jobId, "worker-1", Guid.NewGuid()), CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
         result.Error.Type.ShouldBe(ErrorType.NotFound);
@@ -74,7 +74,7 @@ public sealed class HeartbeatJobCommandHandlerTests
             .ReturnsAsync(job);
 
         var result = await _handler.Handle(
-            new HeartbeatJobCommand(job.Id, "worker-1"), CancellationToken.None);
+            new HeartbeatJobCommand(job.Id, "worker-1", Guid.NewGuid()), CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
     }

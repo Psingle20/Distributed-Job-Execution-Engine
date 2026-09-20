@@ -37,13 +37,6 @@ internal sealed class ChaosCommandDecorator<TCommand>(
             await Task.Delay(delayMs, cancellationToken);
         }
 
-        if (chaosState.IsActive("fail-next-job"))
-        {
-            chaosState.Deactivate("fail-next-job");
-            logger.LogWarning("[CHAOS] fail-next-job triggered");
-            throw new ChaosException("fail-next-job: simulated job handler failure");
-        }
-
         ChaosPolicy? failTypePolicy = chaosState.Get("fail-job-type");
         if (failTypePolicy is not null
             && jobType is not null
@@ -80,12 +73,6 @@ internal sealed class ChaosCommandDecorator<TCommand>(
         if (jobType is null)
         {
             return;
-        }
-
-        if (chaosState.IsActive("crash-after-claim"))
-        {
-            logger.LogWarning("[CHAOS] crash-after-claim triggered");
-            throw new ChaosException("crash-after-claim: simulated crash after successful claim and execution");
         }
 
         if (chaosState.IsActive("crash-after-effect"))

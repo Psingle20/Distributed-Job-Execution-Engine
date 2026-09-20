@@ -22,6 +22,8 @@ public sealed class Job : Entity
 
     public int MaxAttempts { get; private set; }
 
+    public Guid? ExecutionId { get; private set; }
+
     public string? WorkerId { get; private set; }
 
     public DateTimeOffset? LeaseUntil { get; private set; }
@@ -90,14 +92,17 @@ public sealed class Job : Entity
         NextRunAt = null;
         AttemptCount++;
 
-        _executions.Add(JobExecution.Create(Id, workerId, AttemptCount, now));
+        var execution = JobExecution.Create(Id, workerId, AttemptCount, now);
+        _executions.Add(execution);
+        ExecutionId = execution.Id;
+
         RecordTransition(previousState, JobState.Running, now, workerId: workerId, reason: "Claimed by worker");
         Raise(new JobClaimedDomainEvent(Id, workerId, AttemptCount));
 
         return Result.Success();
     }
 
-    public Result Heartbeat(string workerId, DateTimeOffset now, TimeSpan leaseDuration)
+    public Result Heartbeat(string workerId, Guid executionId, DateTimeOffset now, TimeSpan leaseDuration)
     {
         if (State != JobState.Running)
         {
@@ -107,6 +112,11 @@ public sealed class Job : Entity
         if (WorkerId != workerId)
         {
             return Result.Failure(JobErrors.NotLeaseOwner);
+        }
+
+        if (ExecutionId != executionId)
+        {
+            return Result.Failure(JobErrors.StaleExecution);
         }
 
         LeaseUntil = now + leaseDuration;
@@ -115,7 +125,7 @@ public sealed class Job : Entity
         return Result.Success();
     }
 
-    public Result Complete(string workerId, DateTimeOffset now)
+    public Result Complete(string workerId, Guid executionId, DateTimeOffset now, string? resultPayload = null)
     {
         if (State != JobState.Running)
         {
@@ -125,20 +135,25 @@ public sealed class Job : Entity
         if (WorkerId != workerId)
         {
             return Result.Failure(JobErrors.NotLeaseOwner);
+        }
+
+        if (ExecutionId != executionId)
+        {
+            return Result.Failure(JobErrors.StaleExecution);
         }
 
         TransitionTo(JobState.Completed);
         CompletedAt = now;
         ClearLease();
 
-        MarkCurrentExecution(e => e.MarkCompleted(now));
+        MarkCurrentExecution(e => e.MarkCompleted(now, resultPayload));
         RecordTransition(JobState.Running, JobState.Completed, now, workerId: workerId, reason: "Completed successfully");
         Raise(new JobCompletedDomainEvent(Id, workerId, now));
 
         return Result.Success();
     }
 
-    public Result Fail(string workerId, DateTimeOffset now, string error)
+    public Result Fail(string workerId, Guid executionId, DateTimeOffset now, string error)
     {
         if (State != JobState.Running)
         {
@@ -148,6 +163,11 @@ public sealed class Job : Entity
         if (WorkerId != workerId)
         {
             return Result.Failure(JobErrors.NotLeaseOwner);
+        }
+
+        if (ExecutionId != executionId)
+        {
+            return Result.Failure(JobErrors.StaleExecution);
         }
 
         LastError = error;
@@ -291,6 +311,7 @@ public sealed class Job : Entity
         WorkerId = null;
         LeaseUntil = null;
         LastHeartbeatAt = null;
+        ExecutionId = null;
     }
 
     private void RecordTransition(

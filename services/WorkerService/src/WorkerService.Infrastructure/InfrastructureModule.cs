@@ -20,6 +20,7 @@ public sealed class InfrastructureModule : IDependencyModule
     public void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IChaosState, InMemoryChaosState>();
+        services.AddSingleton<IChaosHook, ChaosHook>();
 
         services.AddDbContext<WorkerDbContext>((sp, options) =>
         {

@@ -5,7 +5,8 @@ using WorkerService.Application.Abstractions;
 namespace WorkerService.Application.Jobs.Commands.HandleJobCancelled;
 
 internal sealed class HandleJobCancelledCommandHandler(
-    IProcessedMessageRepository processedMessages) : ICommandHandler<HandleJobCancelledCommand>
+    IProcessedMessageRepository processedMessages,
+    IUnitOfWork unitOfWork) : ICommandHandler<HandleJobCancelledCommand>
 {
     public async Task<Result> Handle(HandleJobCancelledCommand command, CancellationToken cancellationToken)
     {
@@ -15,6 +16,7 @@ internal sealed class HandleJobCancelledCommandHandler(
         }
 
         await processedMessages.AddAsync(command.MessageId, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

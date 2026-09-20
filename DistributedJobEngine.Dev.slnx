@@ -27,6 +27,7 @@
     <Project Path="services/JobService/src/JobService.Infrastructure/JobService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/services/JobService/tests/">
+    <Project Path="services/JobService/tests/JobService.Application.Tests/JobService.Application.Tests.csproj" />
     <Project Path="services/JobService/tests/JobService.ArchitectureTests/JobService.ArchitectureTests.csproj" />
     <Project Path="services/JobService/tests/JobService.Domain.Tests/JobService.Domain.Tests.csproj" />
   </Folder>

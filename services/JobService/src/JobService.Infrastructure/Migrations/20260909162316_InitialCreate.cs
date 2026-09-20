@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace JobService.Infrastructure.Persistence.Migrations
+namespace JobService.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -45,6 +45,7 @@ namespace JobService.Infrastructure.Persistence.Migrations
                     state = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     attempt_count = table.Column<int>(type: "integer", nullable: false),
                     max_attempts = table.Column<int>(type: "integer", nullable: false),
+                    execution_id = table.Column<Guid>(type: "uuid", nullable: true),
                     worker_id = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     lease_until = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     last_heartbeat_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -123,8 +124,7 @@ namespace JobService.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_DaprOutboxMessages_Unprocessed",
                 table: "DaprOutboxMessages",
-                columns: new[] { "processed_at", "occurred_at" },
-                filter: "[ProcessedAt] IS NULL");
+                columns: new[] { "processed_at", "occurred_at" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_job_executions_job_id",

@@ -2,6 +2,7 @@ using CleanArchitecture.BuildingBlocks;
 using CleanArchitecture.BuildingBlocks.Messaging;
 using JobEngine.Contracts.IntegrationEvents;
 using JobService.Application.Abstractions;
+using JobService.Application.Observability;
 using JobService.Domain.Jobs;
 
 namespace JobService.Application.Jobs.Commands.CreateJob;
@@ -23,6 +24,7 @@ internal sealed class CreateJobCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        JobServiceDiagnostics.JobsCreated.Add(1);
         return Result.Success(job.Id);
     }
 }

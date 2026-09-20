@@ -3,17 +3,20 @@ using System;
 using JobService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace JobService.Infrastructure.Persistence.Migrations
+namespace JobService.Infrastructure.Migrations
 {
     [DbContext(typeof(JobDbContext))]
-    partial class JobDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260917191352_AddResultPayloadToJobExecution")]
+    partial class AddResultPayloadToJobExecution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,8 +96,7 @@ namespace JobService.Infrastructure.Persistence.Migrations
                         .HasName("pk_dapr_outbox_messages");
 
                     b.HasIndex("ProcessedAt", "OccurredAt")
-                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed")
-                        .HasFilter("[ProcessedAt] IS NULL");
+                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed");
 
                     b.ToTable("DaprOutboxMessages", (string)null);
                 });
@@ -116,6 +118,10 @@ namespace JobService.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("ExecutionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("execution_id");
 
                     b.Property<DateTimeOffset?>("FailedAt")
                         .HasColumnType("timestamp with time zone")
@@ -212,6 +218,10 @@ namespace JobService.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("JobId")
                         .HasColumnType("uuid")
                         .HasColumnName("job_id");
+
+                    b.Property<string>("ResultPayload")
+                        .HasColumnType("text")
+                        .HasColumnName("result_payload");
 
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone")

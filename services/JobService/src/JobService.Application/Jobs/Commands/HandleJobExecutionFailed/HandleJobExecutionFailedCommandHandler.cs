@@ -1,7 +1,7 @@
 using CleanArchitecture.BuildingBlocks;
 using CleanArchitecture.BuildingBlocks.Messaging;
-using JobEngine.Contracts.IntegrationEvents;
 using JobService.Application.Abstractions;
+using JobService.Application.Observability;
 using JobService.Domain.Jobs;
 
 namespace JobService.Application.Jobs.Commands.HandleJobExecutionFailed;
@@ -9,7 +9,6 @@ namespace JobService.Application.Jobs.Commands.HandleJobExecutionFailed;
 internal sealed class HandleJobExecutionFailedCommandHandler(
     IJobRepository jobRepository,
     IProcessedMessageRepository processedMessages,
-    IOutboxEventPublisher outbox,
     IUnitOfWork unitOfWork) : ICommandHandler<HandleJobExecutionFailedCommand>
 {
     public async Task<Result> Handle(HandleJobExecutionFailedCommand command, CancellationToken cancellationToken)
@@ -25,20 +24,20 @@ internal sealed class HandleJobExecutionFailedCommandHandler(
             return Result.Failure(JobErrors.NotFound(command.JobId));
         }
 
-        Result result = job.Fail(command.WorkerId, command.FailedAt, command.ErrorMessage);
+        Result result = job.Fail(command.WorkerId, command.ExecutionId, command.FailedAt, command.ErrorMessage);
         if (result.IsFailure)
         {
             return result;
         }
 
-        if (job.State == JobState.Retrying && job.NextRunAt is not null)
-        {
-            outbox.Enqueue("jobs.retry-scheduled", new JobRetryScheduledIntegrationEvent(
-                job.Id, job.Type, job.PayloadJson, job.AttemptCount, job.NextRunAt.Value));
-        }
-
         await processedMessages.AddAsync(command.MessageId, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (job.State == JobState.Failed)
+        {
+            JobServiceDiagnostics.JobsFailed.Add(1);
+        }
+
         return Result.Success();
     }
 }

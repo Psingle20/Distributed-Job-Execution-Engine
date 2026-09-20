@@ -12,6 +12,5 @@ public enum ChaosType
     FailNextJob,
     FailJobType,
     DelayExecution,
-    StopHeartbeat,
-    DuplicateEvent
+    StopHeartbeat
 }

@@ -8,7 +8,7 @@ using WorkerService.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace WorkerService.Infrastructure.Persistence.Migrations
+namespace WorkerService.Infrastructure.Migrations
 {
     [DbContext(typeof(WorkerDbContext))]
     partial class WorkerDbContextModelSnapshot : ModelSnapshot
@@ -93,8 +93,7 @@ namespace WorkerService.Infrastructure.Persistence.Migrations
                         .HasName("pk_dapr_outbox_messages");
 
                     b.HasIndex("ProcessedAt", "OccurredAt")
-                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed")
-                        .HasFilter("[ProcessedAt] IS NULL");
+                        .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed");
 
                     b.ToTable("DaprOutboxMessages", (string)null);
                 });
@@ -117,6 +116,10 @@ namespace WorkerService.Infrastructure.Persistence.Migrations
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text")
                         .HasColumnName("error_message");
+
+                    b.Property<Guid>("ExecutionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("execution_id");
 
                     b.Property<Guid>("JobId")
                         .HasColumnType("uuid")

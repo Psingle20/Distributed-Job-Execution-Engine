@@ -20,21 +20,21 @@ internal static class JobTestFactory
     public static Job CreateCompletedJob(string workerId = "worker-1")
     {
         var job = CreateRunningJob(workerId);
-        job.Complete(workerId, Now.AddSeconds(5));
+        job.Complete(workerId, job.ExecutionId!.Value, Now.AddSeconds(5));
         return job;
     }
 
     public static Job CreateFailedJob(string workerId = "worker-1", int maxAttempts = 1)
     {
         var job = CreateRunningJob(workerId, maxAttempts);
-        job.Fail(workerId, Now.AddSeconds(5), "permanent error");
+        job.Fail(workerId, job.ExecutionId!.Value, Now.AddSeconds(5), "permanent error");
         return job;
     }
 
     public static Job CreateRetryingJob(string workerId = "worker-1", int maxAttempts = 3)
     {
         var job = CreateRunningJob(workerId, maxAttempts);
-        job.Fail(workerId, Now.AddSeconds(5), "transient error");
+        job.Fail(workerId, job.ExecutionId!.Value, Now.AddSeconds(5), "transient error");
         return job;
     }
 

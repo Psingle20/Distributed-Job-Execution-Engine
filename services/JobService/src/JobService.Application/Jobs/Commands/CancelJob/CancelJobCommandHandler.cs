@@ -2,6 +2,7 @@ using CleanArchitecture.BuildingBlocks;
 using CleanArchitecture.BuildingBlocks.Messaging;
 using JobEngine.Contracts.IntegrationEvents;
 using JobService.Application.Abstractions;
+using JobService.Application.Observability;
 using JobService.Domain.Jobs;
 
 namespace JobService.Application.Jobs.Commands.CancelJob;
@@ -29,6 +30,8 @@ internal sealed class CancelJobCommandHandler(
         outbox.Enqueue("jobs.cancelled", new JobCancelledIntegrationEvent(job.Id, dateTimeProvider.UtcNow));
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        JobServiceDiagnostics.JobsCancelled.Add(1);
         return Result.Success();
     }
 }

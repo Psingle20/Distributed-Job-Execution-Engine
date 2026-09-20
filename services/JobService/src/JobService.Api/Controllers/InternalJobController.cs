@@ -1,4 +1,5 @@
 using CleanArchitecture.BuildingBlocks.Messaging;
+using JobService.Application.Jobs.Commands.ClaimJob;
 using JobService.Application.Jobs.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +15,7 @@ public sealed class InternalJobController(IRequestHandler handler) : ApiControll
         CancellationToken cancellationToken)
     {
         dto.JobId = jobId;
-        return Match(await handler.Handle(dto, cancellationToken));
+        return Match(await handler.Handle<ClaimJobDto, ClaimJobResult>(dto, cancellationToken));
     }
 
     [HttpPost("{jobId:guid}/heartbeat")]

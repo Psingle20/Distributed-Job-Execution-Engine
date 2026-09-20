@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 using WorkerService.Application.Abstractions;
 
@@ -8,38 +7,32 @@ public sealed class FailNTimesThenSucceedHandler : IJobHandler
 {
     public string JobType => "fail-n-times";
 
-    private static readonly ConcurrentDictionary<Guid, int> FailureCounts = new();
-
     public Task<string?> ExecuteAsync(JobExecutionContext context, CancellationToken cancellationToken)
     {
-        int failAfter = 3;
+        int failCount = 3;
         try
         {
             using var doc = JsonDocument.Parse(context.PayloadJson);
             if (doc.RootElement.TryGetProperty("failCount", out JsonElement el))
             {
-                failAfter = el.GetInt32();
+                failCount = el.GetInt32();
             }
         }
-        catch
+        catch (JsonException)
         {
-            // Use default
+            // Invalid payload — use default failCount
         }
 
-        int failuresSoFar = FailureCounts.AddOrUpdate(context.JobId, 1, (_, c) => c + 1);
-
-        if (failuresSoFar <= failAfter)
+        if (context.AttemptNumber <= failCount)
         {
             throw new InvalidOperationException(
-                $"FailNTimesThenSucceed: deliberate failure #{failuresSoFar} of {failAfter} for job {context.JobId}");
+                $"FailNTimesThenSucceed: deliberate failure on attempt {context.AttemptNumber} of {failCount} for job {context.JobId}");
         }
-
-        FailureCounts.TryRemove(context.JobId, out _);
 
         string result = JsonSerializer.Serialize(new
         {
             context.JobId,
-            SucceededAfterFailures = failAfter,
+            SucceededAfterFailures = failCount,
             context.AttemptNumber
         });
 

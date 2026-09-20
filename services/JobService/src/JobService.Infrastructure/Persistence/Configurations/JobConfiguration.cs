@@ -18,6 +18,7 @@ internal sealed class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.Property(j => j.State).HasMaxLength(32).HasConversion<string>().IsRequired();
         builder.Property(j => j.AttemptCount).IsRequired();
         builder.Property(j => j.MaxAttempts).IsRequired();
+        builder.Property(j => j.ExecutionId);
         builder.Property(j => j.WorkerId).HasMaxLength(128);
         builder.Property(j => j.LeaseUntil);
         builder.Property(j => j.LastHeartbeatAt);

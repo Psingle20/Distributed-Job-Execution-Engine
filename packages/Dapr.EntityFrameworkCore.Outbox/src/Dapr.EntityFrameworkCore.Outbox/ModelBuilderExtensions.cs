@@ -86,10 +86,10 @@ public static class ModelBuilderExtensions
 
     private static void ConfigureUnprocessedIndex(EntityTypeBuilder<OutboxMessage> entity)
     {
-        var index = entity.HasIndex(o => new { o.ProcessedAt, o.OccurredAt }).HasDatabaseName("IX_DaprOutboxMessages_Unprocessed");
-
-        // Filtered indexes are supported by SQL Server, PostgreSQL, and SQLite. Providers
-        // that do not recognise the filter (e.g., in-memory) fall back to a full index.
-        index.HasFilter("[ProcessedAt] IS NULL");
+        // No HasFilter — the raw SQL in HasFilter is not transformed by naming conventions
+        // (e.g. UseSnakeCaseNamingConvention), causing column-name mismatches. The composite
+        // index on (ProcessedAt, OccurredAt) is still effective for the dispatcher's WHERE clause.
+        entity.HasIndex(o => new { o.ProcessedAt, o.OccurredAt })
+            .HasDatabaseName("IX_DaprOutboxMessages_Unprocessed");
     }
 }

@@ -20,6 +20,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Dapr.EntityFrameworkCore.Outbox;
 
@@ -44,32 +45,27 @@ public sealed class PostgreSqlOutboxClaimStrategy : IOutboxClaimStrategy
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrEmpty(lockOwner);
 
-        var (schema, table) = ResolveTable(dbContext, options);
-        var quotedTable = string.IsNullOrEmpty(schema)
-            ? $"\"{table}\""
-            : $"\"{schema}\".\"{table}\"";
-
+        var cols = ResolveColumns(dbContext);
+        var quotedTable = cols.QualifiedTable;
         var lockedUntil = now.Add(options.LockDuration);
 
-        // Two-step CTE keeps the FOR UPDATE SKIP LOCKED semantics and lets us stamp
-        // the lock + attempt count and return the updated rows in one round-trip.
         var sql =
             $"WITH candidate AS (\n" +
-            $"    SELECT \"Id\"\n" +
+            $"    SELECT {cols.Id}\n" +
             $"    FROM {quotedTable}\n" +
-            $"    WHERE \"ProcessedAt\" IS NULL\n" +
-            $"      AND \"AttemptCount\" < @maxAttempts\n" +
-            $"      AND (\"LockedUntil\" IS NULL OR \"LockedUntil\" < @now)\n" +
-            $"    ORDER BY \"OccurredAt\"\n" +
+            $"    WHERE {cols.ProcessedAt} IS NULL\n" +
+            $"      AND {cols.AttemptCount} < @maxAttempts\n" +
+            $"      AND ({cols.LockedUntil} IS NULL OR {cols.LockedUntil} < @now)\n" +
+            $"    ORDER BY {cols.OccurredAt}\n" +
             $"    LIMIT @batchSize\n" +
             $"    FOR UPDATE SKIP LOCKED\n" +
             $")\n" +
             $"UPDATE {quotedTable} AS t\n" +
-            $"SET \"LockOwner\" = @owner,\n" +
-            $"    \"LockedUntil\" = @lockedUntil,\n" +
-            $"    \"AttemptCount\" = t.\"AttemptCount\" + 1\n" +
+            $"SET {cols.LockOwner} = @owner,\n" +
+            $"    {cols.LockedUntil} = @lockedUntil,\n" +
+            $"    {cols.AttemptCount} = t.{cols.AttemptCount} + 1\n" +
             $"FROM candidate c\n" +
-            $"WHERE t.\"Id\" = c.\"Id\"\n" +
+            $"WHERE t.{cols.Id} = c.{cols.Id}\n" +
             $"RETURNING t.*;";
 
         var conn = dbContext.Database.GetDbConnection();
@@ -96,7 +92,7 @@ public sealed class PostgreSqlOutboxClaimStrategy : IOutboxClaimStrategy
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                claimed.Add(Materialize(reader));
+                claimed.Add(Materialize(reader, cols));
             }
 
             return claimed;
@@ -118,13 +114,70 @@ public sealed class PostgreSqlOutboxClaimStrategy : IOutboxClaimStrategy
         CancellationToken cancellationToken)
         => releaseFallback.ReleaseAsync(dbContext, results, lockOwner, cancellationToken);
 
-    private static (string? Schema, string Table) ResolveTable(DbContext dbContext, DaprOutboxOptions options)
+    private sealed class ColumnMap
     {
-        var entity = dbContext.Model.FindEntityType(typeof(OutboxMessage));
-        var schema = entity?.GetSchema() ?? options.SchemaName;
-        var table = entity?.GetTableName() ?? options.TableName;
-        return (schema, table);
+        public required string QualifiedTable { get; init; }
+        public required string Id { get; init; }
+        public required string SchemaVersion { get; init; }
+        public required string OccurredAt { get; init; }
+        public required string PubSubName { get; init; }
+        public required string Topic { get; init; }
+        public required string ContentType { get; init; }
+        public required string Payload { get; init; }
+        public required string MetadataJson { get; init; }
+        public required string CorrelationId { get; init; }
+        public required string ProcessedAt { get; init; }
+        public required string AttemptCount { get; init; }
+        public required string LastError { get; init; }
+        public required string LockOwner { get; init; }
+        public required string LockedUntil { get; init; }
     }
+
+    private static ColumnMap ResolveColumns(DbContext dbContext)
+    {
+        var entityType = dbContext.Model.FindEntityType(typeof(OutboxMessage))
+            ?? throw new InvalidOperationException(
+                "OutboxMessage is not registered in the EF Core model. Call AddDaprOutbox() in OnModelCreating.");
+
+        var schema = entityType.GetSchema();
+        var table = entityType.GetTableName()
+            ?? throw new InvalidOperationException("OutboxMessage has no table name configured.");
+
+        var storeObject = StoreObjectIdentifier.Table(table, schema);
+
+        var qualifiedTable = string.IsNullOrEmpty(schema)
+            ? $"\"{table}\""
+            : $"\"{schema}\".\"{table}\"";
+
+        return new ColumnMap
+        {
+            QualifiedTable = qualifiedTable,
+            Id = Quote(GetColumn(entityType, nameof(OutboxMessage.Id), storeObject)),
+            SchemaVersion = Quote(GetColumn(entityType, nameof(OutboxMessage.SchemaVersion), storeObject)),
+            OccurredAt = Quote(GetColumn(entityType, nameof(OutboxMessage.OccurredAt), storeObject)),
+            PubSubName = Quote(GetColumn(entityType, nameof(OutboxMessage.PubSubName), storeObject)),
+            Topic = Quote(GetColumn(entityType, nameof(OutboxMessage.Topic), storeObject)),
+            ContentType = Quote(GetColumn(entityType, nameof(OutboxMessage.ContentType), storeObject)),
+            Payload = Quote(GetColumn(entityType, nameof(OutboxMessage.Payload), storeObject)),
+            MetadataJson = Quote(GetColumn(entityType, nameof(OutboxMessage.MetadataJson), storeObject)),
+            CorrelationId = Quote(GetColumn(entityType, nameof(OutboxMessage.CorrelationId), storeObject)),
+            ProcessedAt = Quote(GetColumn(entityType, nameof(OutboxMessage.ProcessedAt), storeObject)),
+            AttemptCount = Quote(GetColumn(entityType, nameof(OutboxMessage.AttemptCount), storeObject)),
+            LastError = Quote(GetColumn(entityType, nameof(OutboxMessage.LastError), storeObject)),
+            LockOwner = Quote(GetColumn(entityType, nameof(OutboxMessage.LockOwner), storeObject)),
+            LockedUntil = Quote(GetColumn(entityType, nameof(OutboxMessage.LockedUntil), storeObject)),
+        };
+    }
+
+    private static string GetColumn(IEntityType entityType, string propertyName, StoreObjectIdentifier storeObject)
+    {
+        var property = entityType.FindProperty(propertyName)
+            ?? throw new InvalidOperationException($"Property '{propertyName}' not found on OutboxMessage.");
+        return property.GetColumnName(storeObject)
+            ?? throw new InvalidOperationException($"Column name for '{propertyName}' could not be resolved.");
+    }
+
+    private static string Quote(string identifier) => $"\"{identifier}\"";
 
     private static void AddParameter(DbCommand cmd, string name, object value)
     {
@@ -134,26 +187,28 @@ public sealed class PostgreSqlOutboxClaimStrategy : IOutboxClaimStrategy
         cmd.Parameters.Add(p);
     }
 
-    private static OutboxMessage Materialize(DbDataReader reader)
+    private static OutboxMessage Materialize(DbDataReader reader, ColumnMap cols)
     {
         return new OutboxMessage
         {
-            Id = reader.GetGuid(reader.GetOrdinal("Id")),
-            SchemaVersion = reader.GetInt32(reader.GetOrdinal("SchemaVersion")),
-            OccurredAt = ReadDateTimeOffset(reader, "OccurredAt"),
-            PubSubName = reader.GetString(reader.GetOrdinal("PubSubName")),
-            Topic = reader.GetString(reader.GetOrdinal("Topic")),
-            ContentType = reader.GetString(reader.GetOrdinal("ContentType")),
-            Payload = (byte[])reader["Payload"],
-            MetadataJson = ReadNullableString(reader, "MetadataJson"),
-            CorrelationId = ReadNullableString(reader, "CorrelationId"),
-            ProcessedAt = ReadNullableDateTimeOffset(reader, "ProcessedAt"),
-            AttemptCount = reader.GetInt32(reader.GetOrdinal("AttemptCount")),
-            LastError = ReadNullableString(reader, "LastError"),
-            LockOwner = ReadNullableString(reader, "LockOwner"),
-            LockedUntil = ReadNullableDateTimeOffset(reader, "LockedUntil"),
+            Id = reader.GetGuid(reader.GetOrdinal(Unquote(cols.Id))),
+            SchemaVersion = reader.GetInt32(reader.GetOrdinal(Unquote(cols.SchemaVersion))),
+            OccurredAt = ReadDateTimeOffset(reader, Unquote(cols.OccurredAt)),
+            PubSubName = reader.GetString(reader.GetOrdinal(Unquote(cols.PubSubName))),
+            Topic = reader.GetString(reader.GetOrdinal(Unquote(cols.Topic))),
+            ContentType = reader.GetString(reader.GetOrdinal(Unquote(cols.ContentType))),
+            Payload = (byte[])reader[Unquote(cols.Payload)],
+            MetadataJson = ReadNullableString(reader, Unquote(cols.MetadataJson)),
+            CorrelationId = ReadNullableString(reader, Unquote(cols.CorrelationId)),
+            ProcessedAt = ReadNullableDateTimeOffset(reader, Unquote(cols.ProcessedAt)),
+            AttemptCount = reader.GetInt32(reader.GetOrdinal(Unquote(cols.AttemptCount))),
+            LastError = ReadNullableString(reader, Unquote(cols.LastError)),
+            LockOwner = ReadNullableString(reader, Unquote(cols.LockOwner)),
+            LockedUntil = ReadNullableDateTimeOffset(reader, Unquote(cols.LockedUntil)),
         };
     }
+
+    private static string Unquote(string quoted) => quoted.Trim('"');
 
     private static DateTimeOffset ReadDateTimeOffset(DbDataReader reader, string column)
     {

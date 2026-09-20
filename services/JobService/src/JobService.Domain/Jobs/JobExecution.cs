@@ -18,6 +18,8 @@ public sealed class JobExecution
 
     public DateTimeOffset? CompletedAt { get; private set; }
 
+    public string? ResultPayload { get; private set; }
+
     public string? Error { get; private set; }
 
     public static JobExecution Create(Guid jobId, string workerId, int attemptNumber, DateTimeOffset startedAt)
@@ -33,10 +35,11 @@ public sealed class JobExecution
         };
     }
 
-    public void MarkCompleted(DateTimeOffset completedAt)
+    public void MarkCompleted(DateTimeOffset completedAt, string? resultPayload = null)
     {
         Status = ExecutionStatus.Completed;
         CompletedAt = completedAt;
+        ResultPayload = resultPayload;
     }
 
     public void MarkFailed(DateTimeOffset failedAt, string error)

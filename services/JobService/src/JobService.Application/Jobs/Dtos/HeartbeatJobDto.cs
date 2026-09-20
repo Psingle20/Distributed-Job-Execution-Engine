@@ -6,4 +6,5 @@ public sealed class HeartbeatJobDto : IDto
 {
     public Guid JobId { get; set; }
     public string WorkerId { get; set; } = string.Empty;
+    public Guid ExecutionId { get; set; }
 }

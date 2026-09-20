@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace JobService.Api.Observability;
+namespace JobService.Application.Observability;
 
-internal static class JobServiceDiagnostics
+public static class JobServiceDiagnostics
 {
     public const string ServiceName = "JobService";
 

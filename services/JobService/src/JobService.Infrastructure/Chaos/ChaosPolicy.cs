@@ -10,6 +10,5 @@ public enum ChaosType
     CrashAfterCommit,
     PauseOutbox,
     DelayOutbox,
-    ForcePublishFailure,
-    FailCommand
+    ForcePublishFailure
 }
