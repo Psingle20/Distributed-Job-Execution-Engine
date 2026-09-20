@@ -113,6 +113,26 @@
         "panel": "dedicated",
         "group": "sidecars"
       }
+    },
+    {
+      "label": "stop-all-services",
+      "type": "shell",
+      "command": "dapr stop --app-id jobservice; dapr stop --app-id workerservice; Get-Process daprd -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'All services stopped.'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "stop-everything",
+      "type": "shell",
+      "command": "dapr stop --app-id jobservice; dapr stop --app-id workerservice; Get-Process daprd -ErrorAction SilentlyContinue | Stop-Process -Force; docker compose -f deploy/compose/docker-compose.yml down; Write-Host 'All services and infrastructure stopped.'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }

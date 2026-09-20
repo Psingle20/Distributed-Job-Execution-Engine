@@ -1,15 +1,19 @@
 # Community Demo Script
 
 **Duration**: ~20 minutes
-**Prerequisites**: Docker Desktop running, ports 5000/5101-5103/3000 free
+**Prerequisites**: Docker Desktop running, Dapr CLI installed (`dapr init --slim`), ports 5000/5101-5103/3000 free
 
 ## Setup (2 min)
 
+Start infrastructure:
+
 ```bash
-docker compose -f deploy/compose/docker-compose.yml up --build -d
+docker compose -f deploy/compose/docker-compose.yml up -d
 ```
 
-Wait for all services to be healthy. Open two browser tabs:
+Start services with Dapr sidecars (use VS Code **Run All Services** task, or run each `dapr run` command from the README).
+
+Wait for all services to be ready. Open two browser tabs:
 - **Tab 1**: http://localhost:5000 (Demo Control Panel)
 - **Tab 2**: http://localhost:3000 (Grafana)
 
@@ -99,6 +103,8 @@ Then:
 - Connect back to Dapr SDK PR #1863 and the `Dapr.EntityFrameworkCore.Outbox` package
 
 ## Cleanup
+
+Stop the `dapr run` terminals (Ctrl+C), then tear down infrastructure:
 
 ```bash
 docker compose -f deploy/compose/docker-compose.yml down -v

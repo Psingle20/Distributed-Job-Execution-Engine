@@ -125,20 +125,39 @@ distributed-job-engine/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with Docker Compose)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (1.18+) with `dapr init --slim`
 
 ### Run the Full Stack
 
+**Step 1 — Start infrastructure:**
+
 ```bash
-docker compose -f deploy/compose/docker-compose.yml up --build
+docker compose -f deploy/compose/docker-compose.yml up -d
 ```
 
 This starts:
 - **PostgreSQL** (port 5432) with two databases
 - **Redis** (port 6379) for Dapr pub/sub
-- **JobService** (port 5000) with Dapr sidecar
-- **3 WorkerService replicas** (ports 5101-5103) with Dapr sidecars
 - **Grafana** (port 3000) with pre-provisioned dashboards
 - **Prometheus** (port 9090), **Tempo** (port 3200), **OTel Collector** (port 4317)
+
+**Step 2 — Start services with Dapr sidecars:**
+
+In VS Code, use the **Run All Services** compound task (Terminal > Run Task > run-all-services), or start each service manually:
+
+```bash
+# Terminal 1 — JobService
+dapr run --app-id jobservice --app-port 5000 --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path deploy/dapr/components -- dotnet run --project services/JobService/src/JobService.Api --urls http://localhost:5000
+
+# Terminal 2 — WorkerService (replica 1)
+dapr run --app-id workerservice --app-port 5101 --dapr-http-port 3510 --dapr-grpc-port 50011 --resources-path deploy/dapr/components -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5101
+
+# Terminal 3 — WorkerService (replica 2)
+dapr run --app-id workerservice --app-port 5102 --dapr-http-port 3511 --dapr-grpc-port 50012 --resources-path deploy/dapr/components -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5102
+
+# Terminal 4 — WorkerService (replica 3)
+dapr run --app-id workerservice --app-port 5103 --dapr-http-port 3512 --dapr-grpc-port 50013 --resources-path deploy/dapr/components -- dotnet run --project services/WorkerService/src/WorkerService.Api --urls http://localhost:5103
+```
 
 ### Open the Demo
 
@@ -245,17 +264,17 @@ Custom metrics include job throughput, worker activity, heartbeat rates, claim c
 
 ## Troubleshooting
 
-**Services fail to start**: Check that ports 5000, 5101-5103, 5432, 6379, 3000, 9090 are not in use. Run `docker compose down -v` to clean up volumes and try again.
+**Services fail to start**: Check that ports 5000, 5101-5103, 5432, 6379, 3000, 9090 are not in use. Run `docker compose -f deploy/compose/docker-compose.yml down -v` to clean up infrastructure volumes and try again.
 
-**Jobs stuck in Pending**: Verify the Dapr sidecars are healthy (`docker compose logs jobservice-dapr`). The outbox dispatcher needs the sidecar to publish events.
+**Jobs stuck in Pending**: Verify the Dapr sidecars are running (check the `dapr run` terminal output). The outbox dispatcher needs the sidecar to publish events.
 
-**Workers not claiming jobs**: Check Redis connectivity (`docker compose logs redis`). Dapr pub/sub requires Redis to be running. Also verify the Dapr component configuration in `deploy/dapr/components/pubsub.yaml`.
+**Workers not claiming jobs**: Check Redis connectivity (`docker compose -f deploy/compose/docker-compose.yml logs redis`). Dapr pub/sub requires Redis to be running. Also verify the Dapr component configuration in `deploy/dapr/components/pubsub.yaml`.
 
 **Lease recovery not triggering**: The recovery scan runs every 5 seconds. If a worker holds a lease, it must expire (30 seconds without heartbeat) before recovery kicks in.
 
-**Database migration errors**: Both services auto-migrate on startup. If you see migration conflicts, run `docker compose down -v` to drop the PostgreSQL volumes and restart.
+**Database migration errors**: Both services auto-migrate on startup. If you see migration conflicts, run `docker compose -f deploy/compose/docker-compose.yml down -v` to drop the PostgreSQL volumes and restart.
 
-**Grafana shows no data**: Ensure the OTel Collector is running (`docker compose logs otel-collector`). Traces take a few seconds to appear in Tempo. Metrics are scraped by Prometheus every 15 seconds.
+**Grafana shows no data**: Ensure the OTel Collector is running (`docker compose -f deploy/compose/docker-compose.yml logs otel-collector`). Traces take a few seconds to appear in Tempo. Metrics are scraped by Prometheus every 15 seconds.
 
 ## Connection to Dapr .NET SDK PR #1863
 
