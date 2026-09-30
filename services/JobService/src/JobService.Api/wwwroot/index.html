@@ -57,6 +57,10 @@
         .badge-failed { background: #450a0a; color: var(--red); }
         .badge-cancelled { background: #1e293b; color: var(--muted); }
 
+        .copy-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 0.1rem 0.3rem; font-size: 0.65rem; cursor: pointer; border-radius: 0.2rem; margin-left: 0.25rem; }
+        .copy-btn:hover { color: var(--text); border-color: var(--text); }
+        .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
         .log { background: var(--bg); border: 1px solid var(--border); border-radius: 0.25rem; padding: 0.5rem; font-family: monospace; font-size: 0.75rem; height: 120px; overflow-y: auto; color: var(--muted); }
         .log-entry { margin-bottom: 0.15rem; }
         .log-time { color: var(--border); }
@@ -91,7 +95,7 @@
             <div class="row">
                 <div>
                     <label>Type</label>
-                    <select id="job-type">
+                    <select id="job-type" onchange="updatePayloadFields()">
                         <option value="generate-report">generate-report</option>
                         <option value="data-export">data-export</option>
                         <option value="always-fail">always-fail</option>
@@ -104,12 +108,7 @@
                     <input type="number" id="max-attempts" value="3" min="1" max="10" />
                 </div>
             </div>
-            <div class="row">
-                <div>
-                    <label>Payload JSON</label>
-                    <input type="text" id="payload" value='{}' />
-                </div>
-            </div>
+            <div id="payload-fields"></div>
             <div class="row">
                 <button onclick="submitJob()">Submit Single</button>
                 <div style="display:flex; gap:0.3rem; align-items:end;">
@@ -139,6 +138,7 @@
                 <button class="danger chaos-btn" onclick="chaos('workerservice', 'fail-next-job')">Fail Next Job</button>
                 <button class="warn chaos-btn" onclick="chaosWithParam('workerservice', 'delay-execution', 'delayMs', 10000)">Delay Exec 10s</button>
                 <button class="danger chaos-btn" onclick="chaos('workerservice', 'stop-heartbeat')">Stop Heartbeat</button>
+                <button class="warn chaos-btn" onclick="failJobType()">Fail Job Type</button>
                 <button class="small" onclick="clearAllChaos('workerservice')">Clear All</button>
             </div>
         </div>
@@ -168,7 +168,8 @@
 
     <script>
         const JOB_API = window.location.origin;
-        const WORKER_API = window.WORKER_URL || 'http://localhost:5101';
+        const WORKER_PORTS = [5101, 5102, 5103];
+        const WORKER_APIS = WORKER_PORTS.map(p => `http://localhost:${p}`);
 
         function log(msg) {
             const el = document.getElementById('event-log');
@@ -189,13 +190,74 @@
             }
         }
 
+        const JOB_TYPE_CONFIG = {
+            'generate-report': { description: 'Generates a report (~2s)', fields: [] },
+            'data-export': { description: 'Exports data as JSON (~3s)', fields: [] },
+            'always-fail': { description: 'Always throws an error', fields: [] },
+            'fail-n-times': {
+                description: 'Fails N times, then succeeds',
+                fields: [{ id: 'failCount', label: 'Fail Count', type: 'number', default: 3, min: 1, max: 10 }]
+            },
+            'slow-job': {
+                description: 'Delays execution for a duration',
+                fields: [{ id: 'delaySeconds', label: 'Delay (seconds)', type: 'number', default: 30, min: 1, max: 120 }]
+            }
+        };
+
+        function updatePayloadFields() {
+            const type = document.getElementById('job-type').value;
+            const config = JOB_TYPE_CONFIG[type];
+            const container = document.getElementById('payload-fields');
+
+            if (!config || config.fields.length === 0) {
+                container.innerHTML = `<div style="font-size:0.75rem;color:var(--muted);padding:0.25rem 0;">${config?.description || 'No configuration needed'}</div>`;
+                return;
+            }
+
+            container.innerHTML = `<div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem;">${config.description}</div>` +
+                '<div class="row">' + config.fields.map(f =>
+                    `<div><label>${f.label}</label><input type="${f.type}" id="payload-${f.id}" value="${f.default}" min="${f.min}" max="${f.max}" /></div>`
+                ).join('') + '</div>';
+        }
+
+        function buildPayload() {
+            const type = document.getElementById('job-type').value;
+            const config = JOB_TYPE_CONFIG[type];
+            if (!config || config.fields.length === 0) return '{}';
+            const obj = {};
+            for (const f of config.fields) {
+                const el = document.getElementById(`payload-${f.id}`);
+                if (el) obj[f.id] = f.type === 'number' ? parseInt(el.value) : el.value;
+            }
+            return JSON.stringify(obj);
+        }
+
+        async function failJobType() {
+            const jobType = document.getElementById('job-type').value;
+            const count = parseInt(document.getElementById('max-attempts').value) || 3;
+            const results = await Promise.all(WORKER_APIS.map(url =>
+                api('POST', `${url}/demo/failures/fail-job-type?jobType=${jobType}&count=${count}`)));
+            const ok = results.filter(r => r.ok).length;
+            log(ok > 0
+                ? `<span style="color:var(--red)">[CHAOS]</span> fail-job-type for "${jobType}" (${count}x) on ${ok}/${WORKER_APIS.length} workers`
+                : `Failed to activate fail-job-type on any worker`);
+        }
+
+        function copyId(btn, id) {
+            navigator.clipboard.writeText(id).then(() => {
+                btn.textContent = 'Copied';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+            });
+        }
+
         async function submitJob() {
             const type = document.getElementById('job-type').value;
             const maxAttempts = parseInt(document.getElementById('max-attempts').value);
-            const payload = document.getElementById('payload').value;
-            const result = await api('POST', `${JOB_API}/jobs`, { type, payloadJson: payload, maxAttempts });
+            const payloadJson = buildPayload();
+            const result = await api('POST', `${JOB_API}/jobs`, { type, payloadJson, maxAttempts });
             if (result.ok) {
-                log(`<span style="color:var(--green)">Created job ${result.data}</span> [${type}]`);
+                log(`<span style="color:var(--green)">Created job ${result.data}</span> [${type}] ${payloadJson !== '{}' ? payloadJson : ''}`);
             } else {
                 log(`<span style="color:var(--red)">Failed to create job: ${result.status}</span>`);
             }
@@ -205,12 +267,12 @@
             const count = parseInt(document.getElementById('bulk-count').value);
             const type = document.getElementById('job-type').value;
             const maxAttempts = parseInt(document.getElementById('max-attempts').value);
-            const payload = document.getElementById('payload').value;
+            const payloadJson = buildPayload();
             log(`Submitting ${count} jobs of type [${type}]...`);
             let ok = 0, fail = 0;
             const promises = [];
             for (let i = 0; i < count; i++) {
-                promises.push(api('POST', `${JOB_API}/jobs`, { type, payloadJson: payload, maxAttempts }).then(r => r.ok ? ok++ : fail++));
+                promises.push(api('POST', `${JOB_API}/jobs`, { type, payloadJson, maxAttempts }).then(r => r.ok ? ok++ : fail++));
             }
             await Promise.all(promises);
             log(`Bulk complete: <span style="color:var(--green)">${ok} created</span>, <span style="color:var(--red)">${fail} failed</span>`);
@@ -227,35 +289,60 @@
         }
 
         async function chaos(service, policy) {
-            const base = service === 'jobservice' ? JOB_API : WORKER_API;
-            const result = await api('POST', `${base}/demo/failures/${policy}`);
-            log(result.ok
-                ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} on ${service}`
-                : `Failed to activate ${policy}: ${result.status}`);
+            if (service === 'jobservice') {
+                const result = await api('POST', `${JOB_API}/demo/failures/${policy}`);
+                log(result.ok
+                    ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} on jobservice`
+                    : `Failed to activate ${policy}: ${result.status}`);
+            } else {
+                const results = await Promise.all(WORKER_APIS.map(url => api('POST', `${url}/demo/failures/${policy}`)));
+                const ok = results.filter(r => r.ok).length;
+                log(ok > 0
+                    ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} on ${ok}/${WORKER_APIS.length} workers`
+                    : `Failed to activate ${policy} on any worker`);
+            }
         }
 
         async function chaosWithParam(service, policy, param, value) {
-            const base = service === 'jobservice' ? JOB_API : WORKER_API;
-            const result = await api('POST', `${base}/demo/failures/${policy}?${param}=${value}`);
-            log(result.ok
-                ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} (${param}=${value}) on ${service}`
-                : `Failed to activate ${policy}: ${result.status}`);
+            if (service === 'jobservice') {
+                const result = await api('POST', `${JOB_API}/demo/failures/${policy}?${param}=${value}`);
+                log(result.ok
+                    ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} (${param}=${value}) on jobservice`
+                    : `Failed to activate ${policy}: ${result.status}`);
+            } else {
+                const results = await Promise.all(WORKER_APIS.map(url => api('POST', `${url}/demo/failures/${policy}?${param}=${value}`)));
+                const ok = results.filter(r => r.ok).length;
+                log(ok > 0
+                    ? `<span style="color:var(--red)">[CHAOS]</span> Activated ${policy} (${param}=${value}) on ${ok}/${WORKER_APIS.length} workers`
+                    : `Failed to activate ${policy} on any worker`);
+            }
         }
 
         async function deactivateChaos(service, policy) {
-            const base = service === 'jobservice' ? JOB_API : WORKER_API;
-            await api('DELETE', `${base}/demo/failures/${policy}`);
-            log(`<span style="color:var(--green)">[CHAOS]</span> Deactivated ${policy} on ${service}`);
+            if (service === 'jobservice') {
+                await api('DELETE', `${JOB_API}/demo/failures/${policy}`);
+                log(`<span style="color:var(--green)">[CHAOS]</span> Deactivated ${policy} on jobservice`);
+            } else {
+                await Promise.all(WORKER_APIS.map(url => api('DELETE', `${url}/demo/failures/${policy}`)));
+                log(`<span style="color:var(--green)">[CHAOS]</span> Deactivated ${policy} on all workers`);
+            }
         }
 
         async function clearAllChaos(service) {
-            const base = service === 'jobservice' ? JOB_API : WORKER_API;
-            const result = await api('GET', `${base}/demo/failures`);
-            if (result.ok && result.data) {
-                for (const p of result.data) {
-                    await api('DELETE', `${base}/demo/failures/${p.name}`);
+            if (service === 'jobservice') {
+                const result = await api('GET', `${JOB_API}/demo/failures`);
+                if (result.ok && result.data) {
+                    for (const p of result.data) await api('DELETE', `${JOB_API}/demo/failures/${p.name}`);
+                    log(`<span style="color:var(--green)">[CHAOS]</span> Cleared all policies on jobservice`);
                 }
-                log(`<span style="color:var(--green)">[CHAOS]</span> Cleared all policies on ${service}`);
+            } else {
+                await Promise.all(WORKER_APIS.map(async url => {
+                    const result = await api('GET', `${url}/demo/failures`);
+                    if (result.ok && result.data) {
+                        for (const p of result.data) await api('DELETE', `${url}/demo/failures/${p.name}`);
+                    }
+                }));
+                log(`<span style="color:var(--green)">[CHAOS]</span> Cleared all policies on all workers`);
             }
         }
 
@@ -280,7 +367,9 @@
             if (result.ok && result.data && result.data.length > 0) {
                 tbody.innerHTML = result.data.map(j => `
                     <tr>
-                        <td title="${j.id}" style="font-family:monospace;font-size:0.75rem">${j.id.substring(0, 8)}...</td>
+                        <td style="font-family:monospace;font-size:0.75rem;white-space:nowrap">
+                            ${j.id.substring(0, 8)}<button class="copy-btn" onclick="copyId(this, '${j.id}')" title="${j.id}">Copy</button>
+                        </td>
                         <td>${j.type}</td>
                         <td><span class="badge badge-${j.state.toLowerCase()}">${j.state}</span></td>
                         <td>${j.attemptCount || 0}/${j.maxAttempts}</td>
@@ -305,9 +394,18 @@
                 for (const p of js.data) policies.push({ ...p, service: 'jobservice' });
             }
 
-            const ws = await api('GET', `${WORKER_API}/demo/failures`);
-            if (ws.ok && ws.data) {
-                for (const p of ws.data) policies.push({ ...p, service: 'workerservice' });
+            const workerPolicies = new Map();
+            for (let i = 0; i < WORKER_APIS.length; i++) {
+                const ws = await api('GET', `${WORKER_APIS[i]}/demo/failures`);
+                if (ws.ok && ws.data) {
+                    for (const p of ws.data) {
+                        if (!workerPolicies.has(p.name)) workerPolicies.set(p.name, { ...p, ports: [] });
+                        workerPolicies.get(p.name).ports.push(WORKER_PORTS[i]);
+                    }
+                }
+            }
+            for (const [, p] of workerPolicies) {
+                policies.push({ ...p, service: 'workerservice', portLabel: `${p.ports.length}/${WORKER_PORTS.length} workers` });
             }
 
             if (policies.length === 0) {
@@ -315,7 +413,7 @@
             } else {
                 list.innerHTML = policies.map(p => `
                     <li>
-                        <span><span class="name">${p.name}</span> <span style="color:var(--muted);font-size:0.7rem">(${p.service})</span></span>
+                        <span><span class="name">${p.name}</span> <span style="color:var(--muted);font-size:0.7rem">(${p.portLabel || p.service})</span></span>
                         <button class="small" onclick="deactivateChaos('${p.service}', '${p.name}')">Deactivate</button>
                     </li>
                 `).join('');
@@ -326,6 +424,7 @@
             await Promise.all([refreshSummary(), refreshJobs(), refreshChaos()]);
         }
 
+        updatePayloadFields();
         refresh();
         setInterval(refresh, 2000);
     </script>
