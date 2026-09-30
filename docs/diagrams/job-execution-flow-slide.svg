@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Job Execution Flow in One Slide</title>
+  <desc id="desc">A concise execution loop showing transactional job creation, Dapr pub-sub delivery, lease-protected worker execution, durable outcome publication, and authoritative state transitions.</desc>
+  <defs>
+    <marker id="arrowDark" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#334155"/></marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#7047b8"/></marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#087ea4"/></marker>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #172033; letter-spacing: 0; }
+      .title { font-size: 34px; font-weight: 700; }
+      .subtitle { font-size: 17px; fill: #cbd5e1; }
+      .service { font-size: 24px; font-weight: 700; }
+      .heading { font-size: 18px; font-weight: 700; }
+      .body { font-size: 15px; fill: #475569; }
+      .small { font-size: 13px; fill: #64748b; }
+      .step { font-size: 16px; font-weight: 700; fill: #ffffff; }
+      .arrow-label { font-size: 14px; font-weight: 650; }
+      .event-line { fill: none; stroke: #7047b8; stroke-width: 4; marker-end: url(#arrowPurple); }
+      .invoke-line { fill: none; stroke: #087ea4; stroke-width: 3; stroke-dasharray: 9 7; marker-end: url(#arrowBlue); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#f7f9fc"/>
+  <rect width="1600" height="104" fill="#172033"/>
+  <text x="42" y="48" class="title" style="fill:#ffffff">Job Execution Flow in One Slide</text>
+  <text x="43" y="78" class="subtitle">Durable on both sides • at-least-once in the middle • one authoritative job state machine</text>
+  <rect x="1318" y="28" width="236" height="46" rx="7" fill="#f4effc" stroke="#a78bdb"/>
+  <text x="1436" y="57" text-anchor="middle" class="heading" style="fill:#5b359d">Dapr + EF Core Outbox</text>
+
+  <!-- Client -->
+  <g transform="translate(42 263)">
+    <rect width="148" height="188" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <circle cx="74" cy="57" r="31" fill="#e2e8f0"/>
+    <circle cx="74" cy="49" r="10" fill="#64748b"/>
+    <path d="M50 82c5-18 43-18 48 0" fill="#64748b"/>
+    <text x="74" y="119" text-anchor="middle" class="heading">Client</text>
+    <text x="74" y="144" text-anchor="middle" class="small">API or demo UI</text>
+    <text x="74" y="165" text-anchor="middle" class="small">submits a job</text>
+  </g>
+
+  <!-- JobService -->
+  <g transform="translate(254 184)">
+    <rect width="344" height="360" rx="8" fill="#f5faff" stroke="#3b82c4" stroke-width="2.5"/>
+    <rect width="344" height="60" rx="7" fill="#dcebfa"/><rect y="52" width="344" height="8" fill="#dcebfa"/>
+    <text x="22" y="38" class="service" style="fill:#175d8f">JobService</text>
+    <rect x="22" y="82" width="300" height="102" rx="7" fill="#ffffff" stroke="#93c5e7"/>
+    <text x="42" y="111" class="heading">Atomic transaction</text>
+    <g transform="translate(42 128)">
+      <ellipse cx="25" cy="8" rx="22" ry="8" fill="#2f6792"/><rect x="3" y="8" width="44" height="28" fill="#3e7baa"/><ellipse cx="25" cy="36" rx="22" ry="8" fill="#2f6792"/>
+      <text x="62" y="15" class="body">Job = Pending</text><text x="62" y="37" class="body">+ work outbox row</text>
+    </g>
+    <rect x="22" y="204" width="300" height="62" rx="7" fill="#eaf5ff" stroke="#93c5e7"/>
+    <text x="172" y="229" text-anchor="middle" class="heading">Authoritative owner</text>
+    <text x="172" y="251" text-anchor="middle" class="small">state machine • lease • ExecutionId</text>
+    <rect x="22" y="286" width="300" height="50" rx="7" fill="#ffffff" stroke="#93c5e7"/>
+    <text x="172" y="307" text-anchor="middle" class="small">Consumes outcome idempotently</text>
+    <text x="172" y="326" text-anchor="middle" class="small">and applies the guarded transition</text>
+  </g>
+
+  <!-- Dapr -->
+  <g transform="translate(676 232)">
+    <rect width="252" height="264" rx="8" fill="#faf7ff" stroke="#7047b8" stroke-width="2.5"/>
+    <circle cx="126" cy="62" r="38" fill="#7047b8"/>
+    <text x="126" y="70" text-anchor="middle" font-size="24" font-weight="700" style="fill:#ffffff">dapr</text>
+    <text x="126" y="119" text-anchor="middle" class="service" style="fill:#5b359d">Pub/Sub</text>
+    <rect x="24" y="145" width="204" height="42" rx="7" fill="#ffffff" stroke="#b9a3df"/>
+    <text x="126" y="171" text-anchor="middle" class="body">work topic</text>
+    <rect x="24" y="202" width="204" height="42" rx="7" fill="#ffffff" stroke="#b9a3df"/>
+    <text x="126" y="228" text-anchor="middle" class="body">outcome topic</text>
+  </g>
+
+  <!-- WorkerService -->
+  <g transform="translate(1006 184)">
+    <rect width="354" height="360" rx="8" fill="#f5fcf8" stroke="#38a169" stroke-width="2.5"/>
+    <rect width="354" height="60" rx="7" fill="#dcf4e6"/><rect y="52" width="354" height="8" fill="#dcf4e6"/>
+    <text x="22" y="38" class="service" style="fill:#227244">WorkerService</text>
+    <rect x="22" y="82" width="310" height="62" rx="7" fill="#ffffff" stroke="#98d5b1"/>
+    <text x="177" y="107" text-anchor="middle" class="heading">Inbox + lease claim</text>
+    <text x="177" y="129" text-anchor="middle" class="small">deduplicate • receive ExecutionId</text>
+    <rect x="22" y="162" width="310" height="62" rx="7" fill="#ecfdf3" stroke="#98d5b1"/>
+    <text x="177" y="188" text-anchor="middle" class="heading">Execute + heartbeat</text>
+    <text x="177" y="210" text-anchor="middle" class="small">renew time-bounded ownership</text>
+    <rect x="22" y="242" width="310" height="94" rx="7" fill="#ffffff" stroke="#98d5b1"/>
+    <text x="42" y="269" class="heading">Atomic transaction</text>
+    <g transform="translate(42 284)">
+      <ellipse cx="23" cy="8" rx="20" ry="7" fill="#2f855a"/><rect x="3" y="8" width="40" height="23" fill="#38a169"/><ellipse cx="23" cy="31" rx="20" ry="7" fill="#2f855a"/>
+      <text x="58" y="15" class="body">Execution result</text><text x="58" y="36" class="body">+ outcome outbox row</text>
+    </g>
+  </g>
+
+  <!-- Step 1 -->
+  <line x1="190" y1="355" x2="247" y2="355" stroke="#334155" stroke-width="3" marker-end="url(#arrowDark)"/>
+  <circle cx="218" cy="321" r="17" fill="#334155"/><text x="218" y="327" text-anchor="middle" class="step">1</text>
+  <text x="218" y="297" text-anchor="middle" class="arrow-label">POST /jobs</text>
+
+  <!-- Work path -->
+  <path d="M598 298 L669 298" class="event-line"/>
+  <circle cx="633" cy="265" r="17" fill="#7047b8"/><text x="633" y="271" text-anchor="middle" class="step">2</text>
+  <text x="633" y="239" text-anchor="middle" class="arrow-label" style="fill:#5b359d">dispatch after commit</text>
+  <path d="M928 298 L999 298" class="event-line"/>
+  <circle cx="963" cy="265" r="17" fill="#7047b8"/><text x="963" y="271" text-anchor="middle" class="step">3</text>
+  <text x="963" y="239" text-anchor="middle" class="arrow-label" style="fill:#5b359d">at-least-once delivery</text>
+
+  <!-- Outcome path -->
+  <path d="M1006 467 L935 467" class="event-line"/>
+  <path d="M676 467 L605 467" class="event-line"/>
+  <circle cx="963" cy="501" r="17" fill="#7047b8"/><text x="963" y="507" text-anchor="middle" class="step">5</text>
+  <text x="802" y="535" text-anchor="middle" class="arrow-label" style="fill:#5b359d">durable outcome → idempotent state transition</text>
+
+  <!-- Invocation path -->
+  <path d="M1128 552 C1100 646 522 646 486 552" class="invoke-line"/>
+  <circle cx="806" cy="631" r="17" fill="#087ea4"/><text x="806" y="637" text-anchor="middle" class="step">4</text>
+  <text x="806" y="604" text-anchor="middle" class="arrow-label" style="fill:#087ea4">Dapr service invocation: claim lease + heartbeat</text>
+
+  <!-- State strip -->
+  <g transform="translate(84 688)">
+    <rect width="1432" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="30" y="32" class="heading">Authoritative lifecycle</text>
+    <text x="30" y="56" class="small">Only JobService changes job state</text>
+    <rect x="286" y="20" width="132" height="38" rx="7" fill="#eaf5ff" stroke="#3b82c4"/><text x="352" y="45" text-anchor="middle" class="heading" style="fill:#175d8f">Pending</text>
+    <path d="M426 39 L485 39" stroke="#334155" stroke-width="2.5" marker-end="url(#arrowDark)"/>
+    <rect x="494" y="20" width="132" height="38" rx="7" fill="#fff7ed" stroke="#f59e0b"/><text x="560" y="45" text-anchor="middle" class="heading" style="fill:#9a5b08">Running</text>
+    <path d="M634 39 L693 39" stroke="#334155" stroke-width="2.5" marker-end="url(#arrowDark)"/>
+    <rect x="702" y="20" width="148" height="38" rx="7" fill="#ecfdf3" stroke="#38a169"/><text x="776" y="45" text-anchor="middle" class="heading" style="fill:#227244">Completed</text>
+    <text x="876" y="45" class="heading">or</text>
+    <rect x="912" y="20" width="118" height="38" rx="7" fill="#fff1f2" stroke="#e05260"/><text x="971" y="45" text-anchor="middle" class="heading" style="fill:#b42332">Failed</text>
+    <text x="1054" y="45" class="heading">or</text>
+    <rect x="1091" y="20" width="132" height="38" rx="7" fill="#f4effc" stroke="#7047b8"/><text x="1157" y="45" text-anchor="middle" class="heading" style="fill:#5b359d">Retrying</text>
+    <text x="1250" y="34" class="small">Cancel is a guarded</text><text x="1250" y="53" class="small">terminal transition</text>
+  </g>
+
+  <!-- Recovery statement -->
+  <g transform="translate(84 794)">
+    <rect width="1432" height="70" rx="8" fill="#fffaf2" stroke="#f59e0b" stroke-width="1.5"/>
+    <circle cx="40" cy="35" r="20" fill="#f59e0b"/><path d="M40 22v15l10 7" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <text x="76" y="29" class="heading" style="fill:#9a5b08">Worker crash recovery</text>
+    <text x="76" y="52" class="body">Heartbeat stops → lease expires → JobService schedules a new attempt with a new ExecutionId → stale outcomes are rejected.</text>
+    <rect x="1168" y="17" width="238" height="36" rx="7" fill="#ffffff" stroke="#fdba74"/>
+    <text x="1287" y="40" text-anchor="middle" class="small">No lost job • no stale overwrite</text>
+  </g>
+</svg>
