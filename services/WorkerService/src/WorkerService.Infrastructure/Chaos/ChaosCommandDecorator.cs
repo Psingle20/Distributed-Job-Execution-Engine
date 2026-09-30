@@ -21,8 +21,6 @@ internal sealed class ChaosCommandDecorator<TCommand>(
 
         Result result = await inner.Handle(command, cancellationToken);
 
-        ApplyPostExecutionChaos(jobType);
-
         return result;
     }
 
@@ -65,20 +63,6 @@ internal sealed class ChaosCommandDecorator<TCommand>(
             }
 
             throw new ChaosException($"fail-job-type: simulated failure for job type '{jobType}'");
-        }
-    }
-
-    private void ApplyPostExecutionChaos(string? jobType)
-    {
-        if (jobType is null)
-        {
-            return;
-        }
-
-        if (chaosState.IsActive("crash-after-effect"))
-        {
-            logger.LogWarning("[CHAOS] crash-after-effect triggered");
-            throw new ChaosException("crash-after-effect: simulated crash after side effect completed");
         }
     }
 

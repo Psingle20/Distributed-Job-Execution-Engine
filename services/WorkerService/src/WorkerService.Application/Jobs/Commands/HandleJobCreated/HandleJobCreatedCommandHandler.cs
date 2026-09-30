@@ -94,6 +94,8 @@ internal sealed class HandleJobCreatedCommandHandler(
             WorkerServiceDiagnostics.JobsFailed.Add(1);
         }
 
+        chaosHook.Check("crash-after-effect");
+
         await processedMessages.AddAsync(command.MessageId, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
