@@ -13,14 +13,14 @@
   "panels": [
     {
       "id": 1,
-      "title": "Jobs Created (rate/min)",
+      "title": "Created",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(jobs_created_total[1m]) * 60",
-          "legendFormat": "created/min",
+          "expr": "sum(jobs_created_total) or vector(0)",
+          "legendFormat": "total",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ],
@@ -34,14 +34,14 @@
     },
     {
       "id": 2,
-      "title": "Jobs Completed (rate/min)",
+      "title": "Completed",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(jobs_completed_total[1m]) * 60",
-          "legendFormat": "completed/min",
+          "expr": "sum(jobs_completed_total) or vector(0)",
+          "legendFormat": "total",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ],
@@ -55,42 +55,42 @@
     },
     {
       "id": 3,
-      "title": "Jobs Failed (rate/min)",
+      "title": "Failed",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(jobs_failed_total[1m]) * 60",
-          "legendFormat": "failed/min",
+          "expr": "sum(jobs_failed_total) or vector(0)",
+          "legendFormat": "total",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "steps": [{ "color": "red", "value": null }] }
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
         },
         "overrides": []
       }
     },
     {
       "id": 4,
-      "title": "Jobs Cancelled (rate/min)",
+      "title": "Cancelled",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(jobs_cancelled_total[1m]) * 60",
-          "legendFormat": "cancelled/min",
+          "expr": "sum(jobs_cancelled_total) or vector(0)",
+          "legendFormat": "total",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ],
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "steps": [{ "color": "orange", "value": null }] }
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }] }
         },
         "overrides": []
       }
@@ -99,11 +99,11 @@
       "id": 5,
       "title": "Claim Conflicts",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "gridPos": { "h": 3, "w": 8, "x": 0, "y": 3 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(worker_claim_conflicts_claims_total or jobs_claim_conflicts_claims_total)",
+          "expr": "sum(worker_claim_conflicts_claims_total or jobs_claim_conflicts_claims_total) or vector(0)",
           "legendFormat": "conflicts",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
@@ -111,7 +111,7 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "steps": [{ "color": "yellow", "value": null }] }
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }] }
         },
         "overrides": []
       }
@@ -120,11 +120,11 @@
       "id": 6,
       "title": "Leases Recovered",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "gridPos": { "h": 3, "w": 8, "x": 8, "y": 3 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(jobs_leases_recovered_total)",
+          "expr": "sum(jobs_leases_recovered_total) or vector(0)",
           "legendFormat": "recovered",
           "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
@@ -132,7 +132,28 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "steps": [{ "color": "purple", "value": null }] }
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "purple", "value": 1 }] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "Stale (Fencing)",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 8, "x": 16, "y": 3 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(jobs_stale_executions_executions_total) or vector(0)",
+          "legendFormat": "rejected",
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
         },
         "overrides": []
       }
@@ -141,7 +162,7 @@
       "id": 10,
       "title": "Job Throughput Over Time",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -171,7 +192,7 @@
       "id": 11,
       "title": "Worker Activity",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -201,7 +222,7 @@
       "id": 12,
       "title": "Heartbeats & Duplicates",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -226,7 +247,7 @@
       "id": 13,
       "title": "HTTP Request Duration (p99)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {

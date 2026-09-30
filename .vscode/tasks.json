@@ -91,6 +91,16 @@
       "group": "none"
     },
     {
+      "label": "run-everything",
+      "dependsOn": [
+        "infra-up",
+        "run-all-services"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": "none"
+    },
+    {
       "label": "dapr-sidecar-jobservice",
       "type": "shell",
       "command": "dapr run --app-id jobservice --app-port 5000 --dapr-http-port 3500 --dapr-grpc-port 50001 --resources-path ./deploy/dapr/components --log-level info",
