@@ -18,7 +18,7 @@ public sealed class InfrastructureModule : IDependencyModule
     public void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
         string connectionString = configuration.GetConnectionString("JobServiceDb")
-            ?? "Host=localhost;Port=5432;Database=jobservice_db;Username=postgres;Password=postgres";
+            ?? "Host=127.0.0.1;Port=5432;Database=jobservice_db;Username=postgres;Password=postgres";
 
         services.AddSingleton<IChaosState, InMemoryChaosState>();
         services.AddScoped<ChaosEfInterceptor>();

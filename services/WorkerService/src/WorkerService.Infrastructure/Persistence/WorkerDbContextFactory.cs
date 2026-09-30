@@ -11,7 +11,7 @@ internal sealed class WorkerDbContextFactory : IDesignTimeDbContextFactory<Worke
     {
         DbContextOptionsBuilder<WorkerDbContext> optionsBuilder = new();
         optionsBuilder
-            .UseNpgsql("Host=localhost;Port=5432;Database=workerservice_db;Username=postgres;Password=postgres")
+            .UseNpgsql("Host=127.0.0.1;Port=5432;Database=workerservice_db;Username=postgres;Password=postgres")
             .UseSnakeCaseNamingConvention();
 
         return new WorkerDbContext(optionsBuilder.Options);

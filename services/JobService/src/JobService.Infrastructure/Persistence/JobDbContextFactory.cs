@@ -11,7 +11,7 @@ internal sealed class JobDbContextFactory : IDesignTimeDbContextFactory<JobDbCon
     {
         DbContextOptionsBuilder<JobDbContext> optionsBuilder = new();
         optionsBuilder
-            .UseNpgsql("Host=localhost;Port=5432;Database=jobservice_db;Username=postgres;Password=postgres")
+            .UseNpgsql("Host=127.0.0.1;Port=5432;Database=jobservice_db;Username=postgres;Password=postgres")
             .UseSnakeCaseNamingConvention();
 
         return new JobDbContext(optionsBuilder.Options);
