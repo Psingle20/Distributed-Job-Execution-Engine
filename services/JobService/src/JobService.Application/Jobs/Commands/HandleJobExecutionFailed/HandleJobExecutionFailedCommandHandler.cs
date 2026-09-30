@@ -27,6 +27,11 @@ internal sealed class HandleJobExecutionFailedCommandHandler(
         Result result = job.Fail(command.WorkerId, command.ExecutionId, command.FailedAt, command.ErrorMessage);
         if (result.IsFailure)
         {
+            if (result.Error == JobErrors.StaleExecution)
+            {
+                JobServiceDiagnostics.StaleExecutions.Add(1);
+            }
+
             return result;
         }
 

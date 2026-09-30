@@ -27,4 +27,7 @@ public static class JobServiceDiagnostics
 
     public static readonly Counter<long> ClaimConflicts = Meter.CreateCounter<long>(
         "jobs.claim_conflicts", "claims", "Total claim attempts that failed due to concurrency");
+
+    public static readonly Counter<long> StaleExecutions = Meter.CreateCounter<long>(
+        "jobs.stale_executions", "executions", "Total operations rejected due to ExecutionId fencing mismatch");
 }

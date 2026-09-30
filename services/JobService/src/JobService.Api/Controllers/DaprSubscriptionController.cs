@@ -4,6 +4,7 @@ using Dapr;
 using JobEngine.Contracts.IntegrationEvents;
 using JobService.Application.Jobs.Commands.HandleJobExecutionCompleted;
 using JobService.Application.Jobs.Commands.HandleJobExecutionFailed;
+using JobService.Domain.Jobs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobService.Api.Controllers;
@@ -32,6 +33,11 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
 
         Result result = await commandDispatcher.Dispatch(command, cancellationToken);
 
+        if (result.IsFailure && result.Error == JobErrors.StaleExecution)
+        {
+            return Ok();
+        }
+
         return result.IsSuccess ? Ok() : StatusCode(500);
     }
 
@@ -55,6 +61,11 @@ public sealed class DaprSubscriptionController(ICommandDispatcher commandDispatc
             @event.FailedAt);
 
         Result result = await commandDispatcher.Dispatch(command, cancellationToken);
+
+        if (result.IsFailure && result.Error == JobErrors.StaleExecution)
+        {
+            return Ok();
+        }
 
         return result.IsSuccess ? Ok() : StatusCode(500);
     }

@@ -1,6 +1,7 @@
 using CleanArchitecture.BuildingBlocks;
 using CleanArchitecture.BuildingBlocks.Messaging;
 using JobService.Application.Abstractions;
+using JobService.Application.Observability;
 using JobService.Domain.Jobs;
 
 namespace JobService.Application.Jobs.Commands.HeartbeatJob;
@@ -23,6 +24,11 @@ internal sealed class HeartbeatJobCommandHandler(
         Result result = job.Heartbeat(command.WorkerId, command.ExecutionId, dateTimeProvider.UtcNow, LeaseDuration);
         if (result.IsFailure)
         {
+            if (result.Error == JobErrors.StaleExecution)
+            {
+                JobServiceDiagnostics.StaleExecutions.Add(1);
+            }
+
             return result;
         }
 
